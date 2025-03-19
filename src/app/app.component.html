@@ -10,7 +10,116 @@
         Unlock precision and speed with our cutting-edge transcription services.
         Let technology streamline your workflow and improve patient care.
       </p>
-      <button mat-raised-button color="accent">Get Started</button>
+      <button mat-raised-button color="accent" (click)="onGetStarted()">
+        Get Started
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Transcription Input Area -->
+<div class="transcription-section" id="transcription-section">
+  <textarea
+    [(ngModel)]="transcription"
+    rows="6"
+    placeholder="Enter transcription text here"
+  ></textarea>
+  <button mat-raised-button color="accent" (click)="generateSummaryWS()">
+    Generate Full Summary
+  </button>
+</div>
+
+<!-- Summary Display Section (always visible) -->
+<div class="summary-section">
+  <h2>Summary</h2>
+  <textarea
+    [(ngModel)]="summary"
+    rows="6"
+    placeholder="Summary output"
+    title="Summary output"
+    readonly
+  ></textarea>
+</div>
+
+<!-- Model Response Section -->
+<div class="model-response-section" *ngIf="modelResponse">
+  <h2>Model Response</h2>
+  <textarea
+    [(ngModel)]="modelResponse"
+    rows="6"
+    placeholder="Model response output"
+    title="Model response output"
+    readonly
+  ></textarea>
+</div>
+
+<!-- Additional Elements for Backend Functionalities -->
+<div class="backend-elements">
+  <h2>Backend Functionalities</h2>
+  <div>
+    <label for="context">Context:</label>
+    <textarea
+      id="context"
+      [(ngModel)]="context"
+      rows="3"
+      placeholder="Enter context here"
+    ></textarea>
+  </div>
+  <div>
+    <label for="query">Query:</label>
+    <textarea
+      id="query"
+      [(ngModel)]="query"
+      rows="3"
+      placeholder="Enter query here"
+    ></textarea>
+  </div>
+  <button mat-raised-button color="accent" (click)="askLlama()">
+    Ask Llama
+  </button>
+  <div *ngIf="llamaResponse">
+    <h3>Llama Response</h3>
+    <textarea
+      [(ngModel)]="llamaResponse"
+      rows="6"
+      placeholder="Llama response output"
+      title="Llama response output"
+      readonly
+    ></textarea>
+  </div>
+
+  <!-- New: File Upload Section -->
+  <div class="upload-section">
+    <h3>Upload Audio File</h3>
+    <input
+      type="file"
+      title="Upload audio file"
+      placeholder="Choose file to upload"
+      (change)="onFileSelected($event)"
+    />
+    <button mat-raised-button color="accent" (click)="uploadAudio()">
+      Upload
+    </button>
+    <div *ngIf="uploadedTranscription">
+      <h3>Uploaded Audio Transcription</h3>
+      <textarea
+        [(ngModel)]="uploadedTranscription"
+        rows="6"
+        placeholder="Uploaded transcription output"
+        readonly
+      ></textarea>
+    </div>
+  </div>
+
+  <!-- New: Live Recording Section -->
+  <div class="live-recording">
+    <h3>Live Audio Recording</h3>
+    <button mat-raised-button color="accent" (click)="toggleRecording()">
+      {{ isRecording ? "Stop Recording" : "Start Recording" }}
+    </button>
+    <div *ngIf="liveAudioUrl">
+      <h4>Recorded Audio</h4>
+      <audio [src]="liveAudioUrl" controls></audio>
     </div>
   </div>
 </div>
