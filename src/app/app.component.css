@@ -1,0 +1,83 @@
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap");
+
+/* Hero section container */
+.hero {
+  position: relative;
+  height: 80vh;
+  background: url("/assets/medical-bg.jpg") center/cover no-repeat; /* Ensure you add your background image to /assets */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Overlay gradient for readability */
+.hero-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    135deg,
+    rgba(30, 60, 114, 0.7) 0%,
+    rgba(42, 82, 152, 0.7) 100%
+  );
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Centered hero content */
+.hero-content {
+  position: relative;
+  text-align: center;
+  color: #fff;
+  padding: 20px;
+  font-family: "Poppins", sans-serif; /* updated font */
+}
+
+.hero-content h1 {
+  font-size: 3rem;
+  margin-bottom: 20px;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.hero-content p {
+  font-size: 1.5rem;
+  margin-bottom: 30px;
+  max-width: 700px;
+  margin-left: auto;
+  margin-right: auto;
+  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+/* Button styling */
+button {
+  font-size: 1rem;
+  padding: 12px 24px;
+  font-family: "Poppins", sans-serif; /* updated font */
+}
+
+/* Toolbar title styling */
+.toolbar-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  font-family: "Poppins", sans-serif; /* updated font */
+}
+
+/* Transcription Input Section */
+.transcription-section {
+  max-width: 800px;
+  margin: 20px auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.transcription-section textarea {
+  width: 100%;
+  padding: 10px;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
