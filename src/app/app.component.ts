@@ -61,9 +61,9 @@ export class AppComponent implements OnInit, OnDestroy {
 
   // Live recording properties
   isRecording: boolean = false;
-  mediaRecorder: any;
-  recordedChunks: any[] = [];
-  liveAudioUrl: string = '';
+  private audioContext: AudioContext | null = null;
+  private scriptNode: ScriptProcessorNode | null = null;
+  private source: MediaStreamAudioSourceNode | null = null;
   transcriptionStream: any;
   liveTranscriptionEnabled: boolean = true;
   processingTranscription: boolean = false;
@@ -92,20 +92,8 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    // Subscribe to incoming messages from the WebSocket
-    this.wsService.getMessages().subscribe({
-      next: (msg: any) => {
-        console.log('Received:', msg);
-        this.receivedMessages.push(
-          typeof msg === 'string' ? msg : JSON.stringify(msg)
-        );
-      },
-      error: (err) => console.error(err),
-      complete: () => console.warn('WebSocket connection closed'),
-    });
-
-    // Send an initial test message
-    this.wsService.sendMessage({ text: 'Hello, Server!' });
+    // Initialize application
+    console.log('App initialized');
   }
 
   ngOnDestroy(): void {
@@ -116,6 +104,9 @@ export class AppComponent implements OnInit, OnDestroy {
     if (this.transcriptionStream) {
       this.transcriptionStream.unsubscribe();
     }
+
+    // Stop recording if active
+    this.stopRecording();
   }
 
   navigateTo(section: string): void {
@@ -130,7 +121,8 @@ export class AppComponent implements OnInit, OnDestroy {
 
   // Method to manually send a test message
   sendTestMessage(): void {
-    this.wsService.sendMessage({ text: 'Test message from Angular' });
+    console.log('Test message button clicked');
+    // No longer using general sendMessage method - using specific WebSocket connections instead
   }
 
   // Updated method to generate full summary via WebSocket API
@@ -362,89 +354,27 @@ export class AppComponent implements OnInit, OnDestroy {
             });
         }
 
-        // Set up MediaRecorder for audio capture
+        // Set up audio context and script processor for capturing and processing audio
+        this.audioContext = new AudioContext({ sampleRate: 16000 });
         const stream = await navigator.mediaDevices.getUserMedia({
           audio: true,
         });
+        this.source = this.audioContext.createMediaStreamSource(stream);
+        this.scriptNode = this.audioContext.createScriptProcessor(1024, 1, 1);
 
-        // Configure the MediaRecorder to create audio chunks at regular intervals
-        const options = { mimeType: 'audio/webm' };
-        this.mediaRecorder = new MediaRecorder(stream, options);
-        this.recordedChunks = [];
-
-        // Set a short timeslice to get audio chunks more frequently (e.g., every 1 second)
-        const timeSlice = 1000; // 1 second in milliseconds
-
-        this.mediaRecorder.ondataavailable = (event: any) => {
-          if (event.data.size > 0) {
-            this.recordedChunks.push(event.data);
-
-            // Send the audio chunk for real-time transcription
-            if (this.liveTranscriptionEnabled) {
-              // Send data directly through our WebSocket service
-              this.wsService.sendAudioData(event.data);
-            }
-          }
+        // Process audio data when available
+        this.scriptNode.onaudioprocess = (event) => {
+          const inputBuffer = event.inputBuffer;
+          const channelData = inputBuffer.getChannelData(0); // Mono channel
+          const pcmData = this.floatTo16BitPCM(channelData);
+          this.wsService.sendAudioData(pcmData.buffer); // Send as ArrayBuffer
+          console.log('Sending audio chunk:', pcmData.length, 'samples');
         };
 
-        this.mediaRecorder.onstop = async () => {
-          // Final processing when recording stops
-          this.processingTranscription = true;
+        // Connect the audio nodes
+        this.source.connect(this.scriptNode);
+        this.scriptNode.connect(this.audioContext.destination); // Required to trigger onaudioprocess
 
-          try {
-            // Create a blob from all recorded chunks for playback
-            const blob = new Blob(this.recordedChunks, { type: 'audio/webm' });
-            this.liveAudioUrl = URL.createObjectURL(blob);
-            console.log(
-              'Recording stopped, audio URL created:',
-              this.liveAudioUrl
-            );
-
-            // If live transcription wasn't enabled or failed, process the full recording
-            if (
-              !this.liveTranscriptionEnabled ||
-              !this.transcription ||
-              this.transcription === 'Recording... Speak now'
-            ) {
-              this.transcription = 'Processing complete audio...';
-
-              try {
-                const finalTranscription = await this.wsService.transcribeAudio(
-                  blob
-                );
-                if (finalTranscription && finalTranscription.trim() !== '') {
-                  this.transcription = finalTranscription;
-                  console.log(
-                    'Final transcription received:',
-                    finalTranscription
-                  );
-                } else {
-                  this.transcription = 'No speech detected in the recording.';
-                }
-              } catch (error) {
-                console.error('Final transcription error:', error);
-                this.transcription = `Error during transcription: ${
-                  error instanceof Error ? error.message : 'Unknown error'
-                }`;
-              }
-            }
-          } catch (blobError) {
-            console.error('Error creating audio blob:', blobError);
-            this.transcription = 'Error processing the recorded audio.';
-          } finally {
-            this.processingTranscription = false;
-          }
-        };
-
-        // Handle recording errors
-        this.mediaRecorder.onerror = (event: any) => {
-          console.error('MediaRecorder error:', event);
-          this.isRecording = false;
-          this.transcription = 'Error during recording. Please try again.';
-        };
-
-        // Start recording with the specified time slice
-        this.mediaRecorder.start(timeSlice);
         this.isRecording = true;
         this.transcription = 'Recording... Speak now';
         console.log('Recording started with real-time transcription');
@@ -456,30 +386,35 @@ export class AppComponent implements OnInit, OnDestroy {
       }
     } else {
       // Stopping recording
-      if (this.mediaRecorder && this.mediaRecorder.state !== 'inactive') {
-        this.mediaRecorder.stop();
-
-        // Stop all tracks in the stream to release the microphone
-        if (this.mediaRecorder.stream) {
-          this.mediaRecorder.stream
-            .getTracks()
-            .forEach((track: MediaStreamTrack) => track.stop());
-        }
-
-        this.isRecording = false;
-        console.log('Recording stopped');
-      }
+      this.stopRecording();
     }
   }
 
-  // Send audio chunk for real-time transcription via WebSocket
-  sendAudioChunkForTranscription(audioData: Blob): void {
-    if (!audioData || audioData.size === 0) {
-      console.warn('Empty audio chunk received, skipping transcription');
-      return;
+  /** Stops recording and cleans up resources */
+  private stopRecording(): void {
+    if (this.source) {
+      this.source.disconnect();
+      this.source = null;
     }
+    if (this.scriptNode) {
+      this.scriptNode.disconnect();
+      this.scriptNode = null;
+    }
+    if (this.audioContext) {
+      this.audioContext.close();
+      this.audioContext = null;
+    }
+    this.isRecording = false;
+    console.log('Recording stopped');
+  }
 
-    // Use our direct WebSocket implementation
-    this.wsService.sendAudioData(audioData);
+  /** Converts Float32Array to 16-bit PCM (Int16Array) */
+  private floatTo16BitPCM(float32Array: Float32Array): Int16Array {
+    const int16Array = new Int16Array(float32Array.length);
+    for (let i = 0; i < float32Array.length; i++) {
+      const s = Math.max(-1, Math.min(1, float32Array[i]));
+      int16Array[i] = s < 0 ? s * 0x8000 : s * 0x7fff;
+    }
+    return int16Array;
   }
 }
