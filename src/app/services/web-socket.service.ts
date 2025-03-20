@@ -222,8 +222,10 @@ export class WebSocketService {
         reject(new Error('Summary WebSocket closed'));
 
       try {
-        this.summarySocket.send(transcription);
-        console.log('Sent transcription for summary:', transcription);
+        // Format the message according to the new requirements
+        const message = JSON.stringify({ transcription: transcription });
+        this.summarySocket.send(message);
+        console.log('Sent transcription for summary:', message);
       } catch (error) {
         console.error('Error sending transcription:', error);
         reject(error);
@@ -237,7 +239,11 @@ export class WebSocketService {
       const socket = new WebSocket(this.aiWsUrl);
 
       socket.onopen = () => {
-        const payload = JSON.stringify({ transcription, query });
+        // Format the message according to the new requirements
+        const payload = JSON.stringify({
+          query: query,
+          transcription: transcription
+        });
         socket.send(payload);
         console.log('Sent AI request:', payload);
       };

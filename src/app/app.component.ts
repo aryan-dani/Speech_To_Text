@@ -31,6 +31,8 @@ export class AppComponent implements OnInit, OnDestroy {
   selectedFile: File | null = null;
   selectedFileName: string = '';
   uploadedTranscription: string = '';
+  liveAudioUrl: string = ''; // Added for audio URL
+  showAskAIForm: boolean = false; // Control visibility of Ask AI form
 
   // Sidebar properties
   isMobile: boolean = false;
@@ -134,9 +136,24 @@ export class AppComponent implements OnInit, OnDestroy {
 
     // Show loading state
     this.summary = 'Generating summary...';
+    this.medicalHistory = null;
+
+    // Get the appropriate transcription based on the active section
+    let currentTranscription = this.transcription;
+    if (this.activeSection === 'file' && this.uploadedTranscription) {
+      currentTranscription = this.uploadedTranscription;
+    } else if (this.activeSection === 'samples' && this.selectedSample !== null) {
+      currentTranscription = this.transcription;
+    }
+
+    // Check if we have a valid transcription
+    if (!currentTranscription || currentTranscription.trim() === '') {
+      this.summary = 'Error: No transcription available to summarize.';
+      return;
+    }
 
     this.wsService
-      .generateSummary(this.transcription)
+      .generateSummary(currentTranscription)
       .then((data) => {
         console.log('Summary data received:', data);
 
@@ -188,6 +205,16 @@ export class AppComponent implements OnInit, OnDestroy {
     );
   }
 
+  // Toggle Ask AI form visibility
+  toggleAskAI(): void {
+    this.showAskAIForm = !this.showAskAIForm;
+    // Reset the query and response when toggling
+    if (!this.showAskAIForm) {
+      this.query = '';
+      this.llamaResponse = '';
+    }
+  }
+
   // Updated method to ask Llama API using WebSocketService
   askLlama(): void {
     if (typeof window === 'undefined') {
@@ -198,8 +225,27 @@ export class AppComponent implements OnInit, OnDestroy {
     // Show loading state
     this.llamaResponse = 'Processing request...';
 
+    // Get the appropriate transcription based on the active section
+    let currentTranscription = this.transcription;
+    if (this.activeSection === 'file' && this.uploadedTranscription) {
+      currentTranscription = this.uploadedTranscription;
+    } else if (this.activeSection === 'samples' && this.selectedSample !== null) {
+      currentTranscription = this.transcription;
+    }
+
+    // Check if we have a valid transcription and query
+    if (!currentTranscription || currentTranscription.trim() === '') {
+      this.llamaResponse = 'Error: No transcription available for AI query.';
+      return;
+    }
+
+    if (!this.query || this.query.trim() === '') {
+      this.llamaResponse = 'Error: Please enter a question to ask.';
+      return;
+    }
+
     this.wsService
-      .askAI(this.context, this.query)
+      .askAI(currentTranscription, this.query)
       .then((response) => {
         console.log('Llama response received:', response);
 

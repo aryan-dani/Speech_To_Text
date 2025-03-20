@@ -12,7 +12,7 @@
         >
           <i class="material-icons nav-icon">mic</i>
           <span class="nav-text">Live</span>
-        </li> 
+        </li>
         <li
           [class.active]="activeSection === 'file'"
           (click)="navigateTo('file')"
@@ -42,22 +42,29 @@
               class="action-button record-button"
               (click)="toggleRecording()"
               [disabled]="processingTranscription"
-            > 
+            >
               {{ isRecording ? "Stop" : "Record" }}
             </button>
-            <button class="action-button" [disabled]="!liveAudioUrl">Stop</button>
-            <button class="action-button" [disabled]="!liveAudioUrl">Play</button>
+            <button class="action-button" [disabled]="!liveAudioUrl">
+              Stop
+            </button>
+            <button class="action-button" [disabled]="!liveAudioUrl">
+              Play
+            </button>
             <button class="action-button" [disabled]="!liveAudioUrl">
               Pause
             </button>
           </div>
-          
+
           <div class="transcription-options">
             <label class="toggle-label">
-              <input type="checkbox" [(ngModel)]="liveTranscriptionEnabled">
+              <input type="checkbox" [(ngModel)]="liveTranscriptionEnabled" />
               Real-time Transcription
             </label>
-            <div class="transcription-status" *ngIf="isRecording && liveTranscriptionEnabled">
+            <div
+              class="transcription-status"
+              *ngIf="isRecording && liveTranscriptionEnabled"
+            >
               <div class="status-indicator active"></div>
               <span>Live transcription active</span>
             </div>
@@ -78,13 +85,49 @@
             [readonly]="isRecording"
           ></textarea>
         </div>
-        <button
-          class="magic-button"
-          (click)="generateSummaryWS()"
-          [disabled]="!transcription"
-        >
-          Genrate Summary 
-        </button>
+        <div class="ai-buttons">
+          <button
+            class="magic-button"
+            (click)="generateSummaryWS()"
+            [disabled]="!transcription"
+          >
+            Generate Summary
+          </button>
+          <button
+            class="ask-ai-button"
+            (click)="toggleAskAI()"
+            [disabled]="!transcription"
+          >
+            Ask with AI
+          </button>
+        </div>
+
+        <!-- Ask AI form -->
+        <div class="ask-ai-form" *ngIf="showAskAIForm">
+          <div class="ask-ai-input">
+            <label for="ai-query">Your question:</label>
+            <input
+              type="text"
+              id="ai-query"
+              [(ngModel)]="query"
+              placeholder="Ask a question about the transcription..."
+              class="ai-query-input"
+            />
+            <button
+              class="submit-ai-button"
+              (click)="askLlama()"
+              [disabled]="!query || !transcription"
+            >
+              Submit Question
+            </button>
+          </div>
+          <div class="ai-response" *ngIf="llamaResponse">
+            <h3>AI Response:</h3>
+            <div class="ai-response-content">
+              <p>{{ llamaResponse }}</p>
+            </div>
+          </div>
+        </div>
         <div *ngIf="liveAudioUrl" class="audio-player">
           <h4>Recorded Audio</h4>
           <audio [src]="liveAudioUrl" controls></audio>
@@ -107,9 +150,17 @@
             <i class="material-icons">cloud_upload</i>
             <span>Choose Audio File</span>
           </label>
-          <div class="file-name" *ngIf="selectedFileName">{{ selectedFileName }}</div>
-          <div class="file-name" *ngIf="!selectedFileName">No file selected</div>
-          <button class="upload-button" (click)="uploadAudio()" [disabled]="!selectedFile">
+          <div class="file-name" *ngIf="selectedFileName">
+            {{ selectedFileName }}
+          </div>
+          <div class="file-name" *ngIf="!selectedFileName">
+            No file selected
+          </div>
+          <button
+            class="upload-button"
+            (click)="uploadAudio()"
+            [disabled]="!selectedFile"
+          >
             <i class="material-icons">upload</i> Upload
           </button>
         </div>
@@ -121,13 +172,49 @@
             readonly
           ></textarea>
         </div>
-        <button
-          class="magic-button"
-          (click)="generateSummaryWS()"
-          [disabled]="!uploadedTranscription"
-        >
-          Do Magic
-        </button>
+        <div class="ai-buttons">
+          <button
+            class="magic-button"
+            (click)="generateSummaryWS()"
+            [disabled]="!uploadedTranscription"
+          >
+            Generate Summary
+          </button>
+          <button
+            class="ask-ai-button"
+            (click)="toggleAskAI()"
+            [disabled]="!uploadedTranscription"
+          >
+            Ask with AI
+          </button>
+        </div>
+
+        <!-- Ask AI form -->
+        <div class="ask-ai-form" *ngIf="showAskAIForm">
+          <div class="ask-ai-input">
+            <label for="ai-query-file">Your question:</label>
+            <input
+              type="text"
+              id="ai-query-file"
+              [(ngModel)]="query"
+              placeholder="Ask a question about the transcription..."
+              class="ai-query-input"
+            />
+            <button
+              class="submit-ai-button"
+              (click)="askLlama()"
+              [disabled]="!query || !uploadedTranscription"
+            >
+              Submit Question
+            </button>
+          </div>
+          <div class="ai-response" *ngIf="llamaResponse">
+            <h3>AI Response:</h3>
+            <div class="ai-response-content">
+              <p>{{ llamaResponse }}</p>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
     <!-- Samples Section -->
@@ -158,13 +245,49 @@
             readonly
           ></textarea>
         </div>
-        <button
-          class="magic-button"
-          (click)="generateSummaryWS()"
-          [disabled]="selectedSample === null"
-        >
-          Do Magic
-        </button>
+        <div class="ai-buttons">
+          <button
+            class="magic-button"
+            (click)="generateSummaryWS()"
+            [disabled]="selectedSample === null"
+          >
+            Generate Summary
+          </button>
+          <button
+            class="ask-ai-button"
+            (click)="toggleAskAI()"
+            [disabled]="selectedSample === null"
+          >
+            Ask with AI
+          </button>
+        </div>
+
+        <!-- Ask AI form -->
+        <div class="ask-ai-form" *ngIf="showAskAIForm">
+          <div class="ask-ai-input">
+            <label for="ai-query-sample">Your question:</label>
+            <input
+              type="text"
+              id="ai-query-sample"
+              [(ngModel)]="query"
+              placeholder="Ask a question about the transcription..."
+              class="ai-query-input"
+            />
+            <button
+              class="submit-ai-button"
+              (click)="askLlama()"
+              [disabled]="!query || selectedSample === null"
+            >
+              Submit Question
+            </button>
+          </div>
+          <div class="ai-response" *ngIf="llamaResponse">
+            <h3>AI Response:</h3>
+            <div class="ai-response-content">
+              <p>{{ llamaResponse }}</p>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
     <!-- Summary Display Section (conditionally visible) -->
@@ -184,7 +307,272 @@
     <div class="medical-history-section" *ngIf="medicalHistory">
       <div class="card">
         <h2 class="section-title">Structured Medical History</h2>
-        <pre>{{ medicalHistory | json }}</pre>
+
+        <div class="structured-summary">
+          <!-- Brief Medical History -->
+          <div class="summary-section">
+            <h4>Brief Medical History</h4>
+            <div class="summary-section-content">
+              <textarea
+                class="medical-history-textarea"
+                [(ngModel)]="medicalHistory.brief_medical_history"
+                rows="3"
+                placeholder="No information available"
+              >
+              </textarea>
+            </div>
+          </div>
+
+          <!-- Chief Complaints -->
+          <div class="summary-section">
+            <h4>Chief Complaints</h4>
+            <div class="summary-section-grid">
+              <div class="summary-field">
+                <label>Complaint:</label>
+                <input
+                  type="text"
+                  class="medical-history-input"
+                  [(ngModel)]="medicalHistory.chief_complaints.Complaint"
+                  placeholder="None specified"
+                />
+              </div>
+              <div class="summary-field">
+                <label>Duration:</label>
+                <input
+                  type="text"
+                  class="medical-history-input"
+                  [(ngModel)]="medicalHistory.chief_complaints.Duration"
+                  placeholder="None specified"
+                />
+              </div>
+              <div class="summary-field">
+                <label>Description:</label>
+                <textarea
+                  class="medical-history-textarea"
+                  [(ngModel)]="medicalHistory.chief_complaints.Description"
+                  rows="2"
+                  placeholder="None specified"
+                >
+                </textarea>
+              </div>
+            </div>
+          </div>
+
+          <!-- Current Symptoms -->
+          <div class="summary-section">
+            <h4>Current Symptoms</h4>
+            <div class="summary-section-content">
+              <textarea
+                class="medical-history-textarea"
+                [(ngModel)]="
+                  medicalHistory.current_symptoms_and_medical_background
+                "
+                rows="3"
+                placeholder="None specified"
+              >
+              </textarea>
+            </div>
+          </div>
+
+          <!-- Past Medical History -->
+          <div class="summary-section">
+            <h4>Past Medical History</h4>
+            <div class="summary-section-grid">
+              <div class="summary-field">
+                <label>Diagnosis Type:</label>
+                <input
+                  type="text"
+                  class="medical-history-input"
+                  [(ngModel)]="
+                    medicalHistory.past_medical_history.Diagnosis_Type
+                  "
+                  placeholder="None specified"
+                />
+              </div>
+              <div class="summary-field">
+                <label>Disease:</label>
+                <input
+                  type="text"
+                  class="medical-history-input"
+                  [(ngModel)]="medicalHistory.past_medical_history.Disease"
+                  placeholder="None specified"
+                />
+              </div>
+            </div>
+          </div>
+
+          <!-- Hospitalization History -->
+          <div class="summary-section">
+            <h4>Hospitalization & Surgical History</h4>
+            <div class="summary-section-grid">
+              <div class="summary-field">
+                <label>Diagnosis:</label>
+                <input
+                  type="text"
+                  class="medical-history-input"
+                  [(ngModel)]="
+                    medicalHistory.hospitalization_and_surgical_history
+                      .Diagnosis
+                  "
+                  placeholder="None specified"
+                />
+              </div>
+              <div class="summary-field">
+                <label>Treatment:</label>
+                <input
+                  type="text"
+                  class="medical-history-input"
+                  [(ngModel)]="
+                    medicalHistory.hospitalization_and_surgical_history
+                      .Treatment
+                  "
+                  placeholder="None specified"
+                />
+              </div>
+              <div class="summary-field">
+                <label>Admission Time:</label>
+                <input
+                  type="text"
+                  class="medical-history-input"
+                  [(ngModel)]="
+                    medicalHistory.hospitalization_and_surgical_history
+                      .Admission_Time
+                  "
+                  placeholder="None specified"
+                />
+              </div>
+            </div>
+          </div>
+
+          <!-- Gynecological History -->
+          <div class="summary-section">
+            <h4>Gynecological History</h4>
+            <div class="summary-section-content">
+              <textarea
+                class="medical-history-textarea"
+                [(ngModel)]="medicalHistory.gynecological_history"
+                rows="2"
+                placeholder="None specified"
+              >
+              </textarea>
+            </div>
+          </div>
+
+          <!-- Lifestyle & Social Activity -->
+          <div class="summary-section">
+            <h4>Lifestyle & Social Activity</h4>
+            <div class="summary-section-grid">
+              <div class="summary-field">
+                <label>Time:</label>
+                <input
+                  type="text"
+                  class="medical-history-input"
+                  [(ngModel)]="
+                    medicalHistory.lifestyle_and_social_activity.Time
+                  "
+                  placeholder="None specified"
+                />
+              </div>
+              <div class="summary-field">
+                <label>Status:</label>
+                <input
+                  type="text"
+                  class="medical-history-input"
+                  [(ngModel)]="
+                    medicalHistory.lifestyle_and_social_activity.Status
+                  "
+                  placeholder="None specified"
+                />
+              </div>
+            </div>
+          </div>
+
+          <!-- Family History -->
+          <div class="summary-section">
+            <h4>Family History</h4>
+            <div class="summary-section-grid">
+              <div class="summary-field">
+                <label>Relation:</label>
+                <input
+                  type="text"
+                  class="medical-history-input"
+                  [(ngModel)]="medicalHistory.family_history.Relation"
+                  placeholder="None specified"
+                />
+              </div>
+              <div class="summary-field">
+                <label>Disease:</label>
+                <input
+                  type="text"
+                  class="medical-history-input"
+                  [(ngModel)]="medicalHistory.family_history.Disease_Name"
+                  placeholder="None specified"
+                />
+              </div>
+              <div class="summary-field">
+                <label>Age:</label>
+                <input
+                  type="number"
+                  class="medical-history-input"
+                  [(ngModel)]="medicalHistory.family_history.Age"
+                  placeholder="0"
+                />
+              </div>
+            </div>
+          </div>
+
+          <!-- Allergies & Hypersensitivities -->
+          <div class="summary-section">
+            <h4>Allergies & Hypersensitivities</h4>
+            <div class="summary-section-grid">
+              <div class="summary-field">
+                <label>Allergy:</label>
+                <input
+                  type="text"
+                  class="medical-history-input"
+                  [(ngModel)]="
+                    medicalHistory.allergies_and_hypersensitivities.Allergy
+                  "
+                  placeholder="None specified"
+                />
+              </div>
+              <div class="summary-field">
+                <label>Allergen:</label>
+                <input
+                  type="text"
+                  class="medical-history-input"
+                  [(ngModel)]="
+                    medicalHistory.allergies_and_hypersensitivities.Allergen
+                  "
+                  placeholder="None specified"
+                />
+              </div>
+              <div class="summary-field">
+                <label>Reaction Type:</label>
+                <input
+                  type="text"
+                  class="medical-history-input"
+                  [(ngModel)]="
+                    medicalHistory.allergies_and_hypersensitivities
+                      .Type_of_Reaction
+                  "
+                  placeholder="None specified"
+                />
+              </div>
+              <div class="summary-field">
+                <label>Severity:</label>
+                <input
+                  type="text"
+                  class="medical-history-input"
+                  [(ngModel)]="
+                    medicalHistory.allergies_and_hypersensitivities.Severity
+                  "
+                  placeholder="None specified"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
