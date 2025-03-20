@@ -1,125 +1,191 @@
-<mat-toolbar color="primary">
-  <span class="toolbar-title">Medical Transcription App</span>
-</mat-toolbar>
-
-<div class="hero">
-  <div class="hero-overlay">
-    <div class="hero-content">
-      <h1>Revolutionizing Medical Transcription</h1>
-      <p>
-        Unlock precision and speed with our cutting-edge transcription services.
-        Let technology streamline your workflow and improve patient care.
-      </p>
-      <button mat-raised-button color="accent" (click)="onGetStarted()">
-        Get Started
-      </button>
+<div class="app-container">
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <h1 class="app-title">HIScribe</h1>
     </div>
+    <nav class="sidebar-nav">
+      <ul>
+        <li
+          [class.active]="activeSection === 'live'"
+          (click)="navigateTo('live')"
+        >
+          <i class="material-icons nav-icon">mic</i>
+          <span class="nav-text">Live</span>
+        </li> 
+        <li
+          [class.active]="activeSection === 'file'"
+          (click)="navigateTo('file')"
+        >
+          <i class="material-icons nav-icon">file_upload</i>
+          <span class="nav-text">File</span>
+        </li>
+        <li
+          [class.active]="activeSection === 'samples'"
+          (click)="navigateTo('samples')"
+        >
+          <i class="material-icons nav-icon">view_list</i>
+          <span class="nav-text">Samples</span>
+        </li>
+      </ul>
+    </nav>
   </div>
-</div>
-
-<!-- Transcription Input Area -->
-<div class="transcription-section" id="transcription-section">
-  <textarea
-    [(ngModel)]="transcription"
-    rows="6"
-    placeholder="Enter transcription text here"
-  ></textarea>
-  <button mat-raised-button color="accent" (click)="generateSummaryWS()">
-    Generate Full Summary
-  </button>
-</div>
-
-<!-- Summary Display Section (always visible) -->
-<div class="summary-section">
-  <h2>Summary</h2>
-  <textarea
-    [(ngModel)]="summary"
-    rows="6"
-    placeholder="Summary output"
-    title="Summary output"
-    readonly
-  ></textarea>
-</div>
-
-<!-- Model Response Section -->
-<div class="model-response-section" *ngIf="modelResponse">
-  <h2>Model Response</h2>
-  <textarea
-    [(ngModel)]="modelResponse"
-    rows="6"
-    placeholder="Model response output"
-    title="Model response output"
-    readonly
-  ></textarea>
-</div>
-
-<!-- Additional Elements for Backend Functionalities -->
-<div class="backend-elements">
-  <h2>Backend Functionalities</h2>
-  <div>
-    <label for="context">Context:</label>
-    <textarea
-      id="context"
-      [(ngModel)]="context"
-      rows="3"
-      placeholder="Enter context here"
-    ></textarea>
-  </div>
-  <div>
-    <label for="query">Query:</label>
-    <textarea
-      id="query"
-      [(ngModel)]="query"
-      rows="3"
-      placeholder="Enter query here"
-    ></textarea>
-  </div>
-  <button mat-raised-button color="accent" (click)="askLlama()">
-    Ask Llama
-  </button>
-  <div *ngIf="llamaResponse">
-    <h3>Llama Response</h3>
-    <textarea
-      [(ngModel)]="llamaResponse"
-      rows="6"
-      placeholder="Llama response output"
-      title="Llama response output"
-      readonly
-    ></textarea>
-  </div>
-
-  <!-- New: File Upload Section -->
-  <div class="upload-section">
-    <h3>Upload Audio File</h3>
-    <input
-      type="file"
-      title="Upload audio file"
-      placeholder="Choose file to upload"
-      (change)="onFileSelected($event)"
-    />
-    <button mat-raised-button color="accent" (click)="uploadAudio()">
-      Upload
-    </button>
-    <div *ngIf="uploadedTranscription">
-      <h3>Uploaded Audio Transcription</h3>
-      <textarea
-        [(ngModel)]="uploadedTranscription"
-        rows="6"
-        placeholder="Uploaded transcription output"
-        readonly
-      ></textarea>
+  <!-- Main Content -->
+  <div class="main-content">
+    <!-- Live Recording Section -->
+    <div class="content-section" *ngIf="activeSection === 'live'">
+      <div class="card">
+        <h2 class="section-title">Live Recording</h2>
+        <div class="control-panel">
+          <div class="control-buttons">
+            <button
+              class="action-button record-button"
+              (click)="toggleRecording()"
+              [disabled]="processingTranscription"
+            > 
+              {{ isRecording ? "Stop" : "Record" }}
+            </button>
+            <button class="action-button" [disabled]="!liveAudioUrl">Stop</button>
+            <button class="action-button" [disabled]="!liveAudioUrl">Play</button>
+            <button class="action-button" [disabled]="!liveAudioUrl">
+              Pause
+            </button>
+          </div>
+          
+          <div class="transcription-options">
+            <label class="toggle-label">
+              <input type="checkbox" [(ngModel)]="liveTranscriptionEnabled">
+              Real-time Transcription
+            </label>
+            <div class="transcription-status" *ngIf="isRecording && liveTranscriptionEnabled">
+              <div class="status-indicator active"></div>
+              <span>Live transcription active</span>
+            </div>
+            <div class="transcription-status" *ngIf="processingTranscription">
+              <div class="status-indicator processing"></div>
+              <span>Processing audio...</span>
+            </div>
+          </div>
+        </div>
+        <button class="submit-button" [disabled]="!transcription">
+          Submit
+        </button>
+        <div class="transcription-area">
+          <textarea
+            [(ngModel)]="transcription"
+            rows="6"
+            placeholder="Transcription will appear here..."
+            [readonly]="isRecording"
+          ></textarea>
+        </div>
+        <button
+          class="magic-button"
+          (click)="generateSummaryWS()"
+          [disabled]="!transcription"
+        >
+          Genrate Summary 
+        </button>
+        <div *ngIf="liveAudioUrl" class="audio-player">
+          <h4>Recorded Audio</h4>
+          <audio [src]="liveAudioUrl" controls></audio>
+        </div>
+      </div>
     </div>
-  </div>
-
-  <!-- New: Live Recording Section -->
-  <div class="live-recording">
-    <h3>Live Audio Recording</h3>
-    <button mat-raised-button color="accent" (click)="toggleRecording()">
-      {{ isRecording ? "Stop Recording" : "Start Recording" }}
-    </button>
-    <div *ngIf="liveAudioUrl">
-      <h4>Recorded Audio</h4>
-      <audio [src]="liveAudioUrl" controls></audio>
+    <!-- File Upload Section -->
+    <div class="content-section" *ngIf="activeSection === 'file'">
+      <div class="card">
+        <h2 class="section-title">File Upload</h2>
+        <div class="upload-area">
+          <input
+            type="file"
+            id="file-upload"
+            accept="audio/*"
+            (change)="onFileSelected($event)"
+            class="file-input"
+          />
+          <label for="file-upload" class="file-input-label">
+            <i class="material-icons">cloud_upload</i>
+            <span>Choose Audio File</span>
+          </label>
+          <div class="file-name" *ngIf="selectedFileName">{{ selectedFileName }}</div>
+          <div class="file-name" *ngIf="!selectedFileName">No file selected</div>
+          <button class="upload-button" (click)="uploadAudio()" [disabled]="!selectedFile">
+            <i class="material-icons">upload</i> Upload
+          </button>
+        </div>
+        <div class="transcription-area">
+          <textarea
+            [(ngModel)]="uploadedTranscription"
+            rows="6"
+            placeholder="Transcription will appear here..."
+            readonly
+          ></textarea>
+        </div>
+        <button
+          class="magic-button"
+          (click)="generateSummaryWS()"
+          [disabled]="!uploadedTranscription"
+        >
+          Do Magic
+        </button>
+      </div>
+    </div>
+    <!-- Samples Section -->
+    <div class="content-section" *ngIf="activeSection === 'samples'">
+      <div class="card">
+        <h2 class="section-title">Sample Transcriptions</h2>
+        <div class="samples-list">
+          <div
+            class="sample-item"
+            *ngFor="let sample of sampleTranscriptions; let i = index"
+            (click)="loadSample(i)"
+          >
+            <h3>Sample {{ i + 1 }}</h3>
+            <p>{{ sample.preview }}</p>
+          </div>
+          <div
+            class="sample-item empty"
+            *ngIf="!sampleTranscriptions || sampleTranscriptions.length === 0"
+          >
+            <p>No samples available</p>
+          </div>
+        </div>
+        <div class="transcription-area" *ngIf="selectedSample !== null">
+          <textarea
+            [(ngModel)]="transcription"
+            rows="6"
+            placeholder="Select a sample to view"
+            readonly
+          ></textarea>
+        </div>
+        <button
+          class="magic-button"
+          (click)="generateSummaryWS()"
+          [disabled]="selectedSample === null"
+        >
+          Do Magic
+        </button>
+      </div>
+    </div>
+    <!-- Summary Display Section (conditionally visible) -->
+    <div class="summary-section" *ngIf="summary">
+      <div class="card">
+        <h2 class="section-title">Summary</h2>
+        <textarea
+          [(ngModel)]="summary"
+          rows="6"
+          placeholder="Summary output"
+          title="Summary output"
+          readonly
+        ></textarea>
+      </div>
+    </div>
+    <!-- Model Response Section -->
+    <div class="medical-history-section" *ngIf="medicalHistory">
+      <div class="card">
+        <h2 class="section-title">Structured Medical History</h2>
+        <pre>{{ medicalHistory | json }}</pre>
+      </div>
     </div>
   </div>
 </div>
