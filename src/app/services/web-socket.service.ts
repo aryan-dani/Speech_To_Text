@@ -242,7 +242,7 @@ export class WebSocketService {
         // Format the message according to the new requirements
         const payload = JSON.stringify({
           query: query,
-          transcription: transcription
+          transcription: transcription,
         });
         socket.send(payload);
         console.log('Sent AI request:', payload);
