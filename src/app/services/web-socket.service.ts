@@ -60,10 +60,18 @@ export class WebSocketService {
 
       this.transcribeSocket.onerror = (error) => {
         console.error('Transcription WebSocket error:', error);
+        // Log the error object to inspect its structure
+        console.log('Transcription WebSocket error object:', error);
+        // Dispatch a new Event instance with the error message
+        const errorMessage =
+          error instanceof Error ? error.message : 'Unknown error';
+        this.transcriptionSubject.next(`WebSocket error: ${errorMessage}`);
       };
 
       this.transcribeSocket.onclose = (event) => {
         console.warn('Transcription WebSocket closed:', event);
+        // Log the close event to inspect its structure
+        console.log('Transcription WebSocket close event:', event);
         this.reconnectTranscription();
       };
     }
@@ -78,6 +86,8 @@ export class WebSocketService {
     console.log(
       `Reconnecting transcription in ${delay}ms (attempt ${this.transcribeReconnectAttempts})`
     );
+    // Log before attempting to reconnect
+    console.log('Attempting to reconnect to transcription WebSocket');
     setTimeout(() => this.connectTranscriptionWebSocket(), delay);
   }
 
@@ -166,10 +176,18 @@ export class WebSocketService {
 
       this.summarySocket.onerror = (error) => {
         console.error('Summary WebSocket error:', error);
+        // Log the error object to inspect its structure
+        console.log('Summary WebSocket error object:', error);
+        // Dispatch a new Event instance with the error message
+        const errorMessage =
+          error instanceof Error ? error.message : 'Unknown error';
+        this.summarySubject.error(`WebSocket error: ${errorMessage}`);
       };
 
       this.summarySocket.onclose = (event) => {
         console.warn('Summary WebSocket closed:', event);
+        // Log the close event to inspect its structure
+        console.log('Summary WebSocket close event:', event);
         this.reconnectSummary();
       };
     }
@@ -184,6 +202,8 @@ export class WebSocketService {
     console.log(
       `Reconnecting summary in ${delay}ms (attempt ${this.summaryReconnectAttempts})`
     );
+    // Log before attempting to reconnect
+    console.log('Attempting to reconnect to summary WebSocket');
     setTimeout(() => this.connectSummaryWebSocket(), delay);
   }
 
@@ -256,7 +276,11 @@ export class WebSocketService {
 
       socket.onerror = (error) => {
         console.error('AI WebSocket error:', error);
-        reject(new Error('AI WebSocket error'));
+        // Log the error object to inspect its structure
+        console.log('AI WebSocket error object:', error);
+        const errorMessage =
+          error instanceof Error ? error.message : 'Unknown error';
+        reject(new Error(`AI WebSocket error: ${errorMessage}`));
       };
 
       socket.onclose = (event) => {
