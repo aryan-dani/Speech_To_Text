@@ -1,9 +1,8 @@
 import { Injectable, NgZone } from '@angular/core';
 import { Observable, Subject } from 'rxjs';
-import { finalize } from 'rxjs/operators';
 
 // Base URL for backend services (ensure this matches your backend)
-const BACKEND_HOST = '192.168.1.96';
+const BACKEND_HOST = '192.168.3.21';
 const BACKEND_PORT = 8000;
 const BACKEND_WS_BASE = `ws://${BACKEND_HOST}:${BACKEND_PORT}`;
 const BACKEND_HTTP_BASE = `http://${BACKEND_HOST}:${BACKEND_PORT}`;
@@ -24,7 +23,7 @@ export class WebSocketService {
 
   private transcribeReconnectAttempts = 0;
   private summaryReconnectAttempts = 0;
-  private maxReconnectDelay = 30000; // 30 seconds max delay
+  private maxReconnectDelay = 30000; 
 
   constructor(private zone: NgZone) {
     this.connectTranscriptionWebSocket();
