@@ -34,6 +34,11 @@ export class AppComponent implements OnInit, OnDestroy {
   liveAudioUrl: string = ''; // Added for audio URL
   showAskAIForm: boolean = false; // Control visibility of Ask AI form
 
+  // Audio playback properties
+  private audioElement: HTMLAudioElement | null = null;
+  private recordedChunks: Int16Array[] = [];
+  isPlaying: boolean = false;
+
   // Sidebar properties
   isMobile: boolean = false;
   activeSection: string = 'live'; // Default active section
@@ -127,6 +132,57 @@ export class AppComponent implements OnInit, OnDestroy {
     // No longer using general sendMessage method - using specific WebSocket connections instead
   }
 
+  // Audio playback methods
+  playAudio(): void {
+    if (!this.liveAudioUrl) {
+      console.warn('No audio URL available for playback');
+      return;
+    }
+
+    if (!this.audioElement) {
+      this.audioElement = new Audio(this.liveAudioUrl);
+
+      // Add event listeners
+      this.audioElement.addEventListener('play', () => {
+        this.isPlaying = true;
+        console.log('Audio playback started');
+      });
+
+      this.audioElement.addEventListener('pause', () => {
+        this.isPlaying = false;
+        console.log('Audio playback paused');
+      });
+
+      this.audioElement.addEventListener('ended', () => {
+        this.isPlaying = false;
+        console.log('Audio playback ended');
+      });
+    } else {
+      // Update the source in case it has changed
+      this.audioElement.src = this.liveAudioUrl;
+    }
+
+    this.audioElement.play().catch((error) => {
+      console.error('Error playing audio:', error);
+    });
+  }
+
+  pauseAudio(): void {
+    if (this.audioElement && this.isPlaying) {
+      this.audioElement.pause();
+      console.log('Audio playback paused');
+    }
+  }
+
+  stopAudio(): void {
+    if (this.audioElement) {
+      this.audioElement.pause();
+      this.audioElement.currentTime = 0;
+      this.isPlaying = false;
+      console.log('Audio playback stopped');
+    }
+  }
+
   // Updated method to generate full summary via WebSocket API
   generateSummaryWS(): void {
     if (typeof window === 'undefined') {
@@ -142,7 +198,10 @@ export class AppComponent implements OnInit, OnDestroy {
     let currentTranscription = this.transcription;
     if (this.activeSection === 'file' && this.uploadedTranscription) {
       currentTranscription = this.uploadedTranscription;
-    } else if (this.activeSection === 'samples' && this.selectedSample !== null) {
+    } else if (
+      this.activeSection === 'samples' &&
+      this.selectedSample !== null
+    ) {
       currentTranscription = this.transcription;
     }
 
@@ -229,14 +288,17 @@ export class AppComponent implements OnInit, OnDestroy {
     let currentTranscription = this.transcription;
     if (this.activeSection === 'file' && this.uploadedTranscription) {
       currentTranscription = this.uploadedTranscription;
-    } else if (this.activeSection === 'samples' && this.selectedSample !== null) {
+    } else if (
+      this.activeSection === 'samples' &&
+      this.selectedSample !== null
+    ) {
       currentTranscription = this.transcription;
     }
 
-    // Check if we have a valid transcription and query
+    // If no transcription is available, use a default message
     if (!currentTranscription || currentTranscription.trim() === '') {
-      this.llamaResponse = 'Error: No transcription available for AI query.';
-      return;
+      currentTranscription =
+        'No transcription available. You can still ask general medical questions.';
     }
 
     if (!this.query || this.query.trim() === '') {
@@ -408,11 +470,19 @@ export class AppComponent implements OnInit, OnDestroy {
         this.source = this.audioContext.createMediaStreamSource(stream);
         this.scriptNode = this.audioContext.createScriptProcessor(1024, 1, 1);
 
+        // Clear any previously recorded chunks when starting a new recording
+        this.recordedChunks = [];
+
         // Process audio data when available
         this.scriptNode.onaudioprocess = (event) => {
           const inputBuffer = event.inputBuffer;
           const channelData = inputBuffer.getChannelData(0); // Mono channel
           const pcmData = this.floatTo16BitPCM(channelData);
+
+          // Store a copy of the recorded chunk for local playback
+          this.recordedChunks.push(new Int16Array(pcmData));
+
+          // Send to WebSocket for transcription
           this.wsService.sendAudioData(pcmData.buffer); // Send as ArrayBuffer
           console.log('Sending audio chunk:', pcmData.length, 'samples');
         };
@@ -450,8 +520,102 @@ export class AppComponent implements OnInit, OnDestroy {
       this.audioContext.close();
       this.audioContext = null;
     }
+
+    // If we have recorded audio data, create a blob and URL for playback
+    if (this.recordedChunks.length > 0) {
+      this.processingTranscription = true;
+      this.createAudioFromChunks();
+      this.processingTranscription = false;
+    }
+
     this.isRecording = false;
     console.log('Recording stopped');
+  }
+
+  /** Creates an audio blob from recorded chunks and sets the audio URL */
+  private createAudioFromChunks(): void {
+    try {
+      // Concatenate all Int16Array chunks into a single array
+      const totalLength = this.recordedChunks.reduce(
+        (acc, chunk) => acc + chunk.length,
+        0
+      );
+      const audioData = new Int16Array(totalLength);
+
+      let offset = 0;
+      for (const chunk of this.recordedChunks) {
+        audioData.set(chunk, offset);
+        offset += chunk.length;
+      }
+
+      // Convert Int16Array to Float32Array for Web Audio API
+      const floatArray = new Float32Array(audioData.length);
+      for (let i = 0; i < audioData.length; i++) {
+        floatArray[i] = audioData[i] / 32768.0; // Convert from int16 to float32 (-1.0 to 1.0)
+      }
+
+      // Create WAV file with 16kHz sample rate
+      const wavBuffer = this.createWaveFileBuffer(floatArray, 16000);
+      const blob = new Blob([wavBuffer], { type: 'audio/wav' });
+
+      // Create URL for the audio blob
+      if (this.liveAudioUrl) {
+        URL.revokeObjectURL(this.liveAudioUrl); // Clean up previous URL
+      }
+      this.liveAudioUrl = URL.createObjectURL(blob);
+      console.log('Audio URL created:', this.liveAudioUrl);
+    } catch (error) {
+      console.error('Error creating audio from chunks:', error);
+    }
+  }
+
+  /** Creates a WAV file buffer from audio data */
+  private createWaveFileBuffer(
+    audioData: Float32Array,
+    sampleRate: number
+  ): ArrayBuffer {
+    // Convert Float32Array to Int16Array for WAV format
+    const numSamples = audioData.length;
+    const dataSize = numSamples * 2; // 16-bit = 2 bytes per sample
+    const buffer = new ArrayBuffer(44 + dataSize); // 44 bytes is the size of the WAV header
+    const view = new DataView(buffer);
+
+    // Write WAV header
+    // "RIFF" chunk descriptor
+    this.writeString(view, 0, 'RIFF');
+    view.setUint32(4, 36 + dataSize, true); // 36 + dataSize
+    this.writeString(view, 8, 'WAVE');
+
+    // "fmt " sub-chunk
+    this.writeString(view, 12, 'fmt ');
+    view.setUint32(16, 16, true); // fmt chunk size: 16
+    view.setUint16(20, 1, true); // audio format: PCM = 1
+    view.setUint16(22, 1, true); // number of channels: 1 (mono)
+    view.setUint32(24, sampleRate, true); // sample rate
+    view.setUint32(28, sampleRate * 2, true); // byte rate = sampleRate * blockAlign
+    view.setUint16(32, 2, true); // block align = channels * bitsPerSample/8
+    view.setUint16(34, 16, true); // bits per sample
+
+    // "data" sub-chunk
+    this.writeString(view, 36, 'data');
+    view.setUint32(40, dataSize, true); // data chunk size
+
+    // Write audio data
+    const dataView = new Int16Array(buffer, 44, numSamples);
+    for (let i = 0; i < numSamples; i++) {
+      // Convert float to int16
+      const s = Math.max(-1, Math.min(1, audioData[i]));
+      dataView[i] = s < 0 ? s * 0x8000 : s * 0x7fff;
+    }
+
+    return buffer;
+  }
+
+  /** Helper function to write a string to a DataView */
+  private writeString(view: DataView, offset: number, string: string): void {
+    for (let i = 0; i < string.length; i++) {
+      view.setUint8(offset + i, string.charCodeAt(i));
+    }
   }
 
   /** Converts Float32Array to 16-bit PCM (Int16Array) */

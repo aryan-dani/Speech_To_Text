@@ -236,6 +236,7 @@ button:disabled::after {
   transition: all 0.3s ease;
   font-weight: 500;
   margin: 5px;
+  
 }
 
 .record-button {

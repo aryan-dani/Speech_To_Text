@@ -1,7 +1,7 @@
 <div class="app-container">
   <!-- Sidebar -->
   <div class="sidebar">
-    <img id = "logo" src="assets/image.png" alt="Logo" />
+    <img id="logo" src="assets/image.png" alt="Logo" />
     <div class="sidebar-header">
       <h1 class="app-title">HIScribe</h1>
     </div>
@@ -46,15 +46,6 @@
             >
               {{ isRecording ? "Stop" : "Record" }}
             </button>
-            <button class="action-button" [disabled]="!liveAudioUrl">
-              Stop
-            </button>
-            <button class="action-button" [disabled]="!liveAudioUrl">
-              Play
-            </button>
-            <button class="action-button" [disabled]="!liveAudioUrl">
-              Pause
-            </button>
           </div>
 
           <div class="transcription-options">
@@ -94,11 +85,7 @@
           >
             Generate Summary
           </button>
-          <button
-            class="ask-ai-button"
-            (click)="toggleAskAI()"
-            [disabled]="!transcription"
-          >
+          <button class="ask-ai-button" (click)="toggleAskAI()">
             Ask with AI
           </button>
         </div>
@@ -181,11 +168,7 @@
           >
             Generate Summary
           </button>
-          <button
-            class="ask-ai-button"
-            (click)="toggleAskAI()"
-            [disabled]="!uploadedTranscription"
-          >
+          <button class="ask-ai-button" (click)="toggleAskAI()">
             Ask with AI
           </button>
         </div>
@@ -254,11 +237,7 @@
           >
             Generate Summary
           </button>
-          <button
-            class="ask-ai-button"
-            (click)="toggleAskAI()"
-            [disabled]="selectedSample === null"
-          >
+          <button class="ask-ai-button" (click)="toggleAskAI()">
             Ask with AI
           </button>
         </div>
