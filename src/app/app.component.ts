@@ -42,6 +42,22 @@ export class AppComponent implements OnInit, OnDestroy {
   // Sidebar properties
   isMobile: boolean = false;
   activeSection: string = 'live'; // Default active section
+  sidebarActive: boolean = false; // For mobile sidebar toggle
+
+  // Interactive UI properties
+  isDragging: boolean = false; // For drag and drop
+  isUploading: boolean = false; // For upload progress
+  uploadProgress: number = 0; // For upload progress bar
+  
+  // Collapsible sections state
+  hospitalActive: boolean = false;
+  gynActive: boolean = false;
+  lifestyleActive: boolean = false;
+  familyActive: boolean = false;
+  allergyActive: boolean = false;
+
+  // Toast notification properties
+  toasts: any[] = [];
 
   // Sample transcriptions
   sampleTranscriptions: any[] = [
@@ -50,18 +66,24 @@ export class AppComponent implements OnInit, OnDestroy {
       preview: 'Patient presents with symptoms of...',
       content:
         'Patient presents with symptoms of acute respiratory distress. History of asthma and seasonal allergies. Currently using albuterol inhaler as needed.',
+      duration: '3:45',
+      type: 'Consultation'
     },
     {
       title: 'Sample 2',
       preview: 'Follow-up appointment for diabetes management...',
       content:
         'Follow-up appointment for diabetes management. Blood glucose levels have been stable. Patient reports compliance with medication regimen and dietary recommendations.',
+      duration: '5:20',
+      type: 'Follow-up'
     },
     {
       title: 'Sample 3',
       preview: 'Post-operative evaluation following...',
       content:
         'Post-operative evaluation following total knee replacement. Incision healing well with no signs of infection. Patient reports moderate pain controlled with prescribed medication.',
+      duration: '4:15',
+      type: 'Post-op'
     },
   ];
   selectedSample: number | null = null;
@@ -90,6 +112,9 @@ export class AppComponent implements OnInit, OnDestroy {
   checkScreenSize() {
     if (typeof window !== 'undefined') {
       this.isMobile = window.innerWidth < 768;
+      if (!this.isMobile && this.sidebarActive) {
+        this.sidebarActive = false;
+      }
     }
   }
 
@@ -114,28 +139,114 @@ export class AppComponent implements OnInit, OnDestroy {
 
     // Stop recording if active
     this.stopRecording();
+    
+    // Clean up any audio URLs to prevent memory leaks
+    if (this.liveAudioUrl) {
+      URL.revokeObjectURL(this.liveAudioUrl);
+    }
+  }
+
+  // Sidebar toggle methods for mobile
+  toggleSidebar(): void {
+    this.sidebarActive = !this.sidebarActive;
+  }
+
+  closeSidebar(): void {
+    this.sidebarActive = false;
   }
 
   navigateTo(section: string): void {
     this.activeSection = section;
+    if (this.isMobile) {
+      this.closeSidebar();
+    }
+  }
+
+  // Toast notification methods
+  showToast(type: string, title: string, message: string, duration: number = 5000): void {
+    const toast = {
+      id: new Date().getTime(),
+      type,
+      title,
+      message,
+      progress: 100
+    };
+    
+    this.toasts.unshift(toast);
+    
+    // Auto-remove toast after duration
+    setTimeout(() => {
+      this.removeToast(toast.id);
+    }, duration);
+    
+    // Update progress bar
+    const interval = setInterval(() => {
+      toast.progress -= 100 / (duration / 100);
+      if (toast.progress <= 0) {
+        clearInterval(interval);
+      }
+    }, 100);
+  }
+  
+  removeToast(id: number): void {
+    this.toasts = this.toasts.filter(toast => toast.id !== id);
+  }
+
+  // Visualization for audio recording
+  getRandomHeight(index: number): number {
+    if (!this.isRecording) return 10;
+    
+    // Generate more realistic audio visualization
+    const baseHeight = 20;
+    const maxVar = 60;
+    const time = Date.now() / 200;
+    const sinVal = Math.sin(time + index * 0.4);
+    const cosVal = Math.cos(time * 0.7 + index * 0.3);
+    
+    return baseHeight + (sinVal + cosVal) * maxVar / 2;
   }
 
   // Sample methods
   loadSample(index: number): void {
     this.selectedSample = index;
     this.transcription = this.sampleTranscriptions[index].content;
+    this.showToast('success', 'Sample Loaded', `Sample ${index + 1} has been loaded.`, 3000);
   }
 
-  // Method to manually send a test message
-  sendTestMessage(): void {
-    console.log('Test message button clicked');
-    // No longer using general sendMessage method - using specific WebSocket connections instead
+  // Drag and drop file handling
+  onDragOver(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.isDragging = true;
+  }
+  
+  onDragLeave(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.isDragging = false;
+  }
+  
+  onDrop(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.isDragging = false;
+    
+    if (event.dataTransfer?.files.length) {
+      const file = event.dataTransfer.files[0];
+      if (file.type.startsWith('audio/')) {
+        this.selectedFile = file;
+        this.selectedFileName = file.name;
+        this.showToast('success', 'File Added', `${file.name} has been added.`, 3000);
+      } else {
+        this.showToast('error', 'Invalid File', 'Please upload an audio file.', 5000);
+      }
+    }
   }
 
   // Audio playback methods
   playAudio(): void {
     if (!this.liveAudioUrl) {
-      console.warn('No audio URL available for playback');
+      this.showToast('error', 'No Audio', 'No audio file available for playback', 3000);
       return;
     }
 
@@ -164,6 +275,7 @@ export class AppComponent implements OnInit, OnDestroy {
 
     this.audioElement.play().catch((error) => {
       console.error('Error playing audio:', error);
+      this.showToast('error', 'Playback Error', 'Could not play the audio file.', 5000);
     });
   }
 
@@ -193,6 +305,8 @@ export class AppComponent implements OnInit, OnDestroy {
     // Show loading state
     this.summary = 'Generating summary...';
     this.medicalHistory = null;
+    this.processingTranscription = true;
+    this.showToast('info', 'Processing', 'Generating medical summary...', 5000);
 
     // Get the appropriate transcription based on the active section
     let currentTranscription = this.transcription;
@@ -208,6 +322,8 @@ export class AppComponent implements OnInit, OnDestroy {
     // Check if we have a valid transcription
     if (!currentTranscription || currentTranscription.trim() === '') {
       this.summary = 'Error: No transcription available to summarize.';
+      this.processingTranscription = false;
+      this.showToast('error', 'No Content', 'No transcription available to summarize.', 5000);
       return;
     }
 
@@ -215,6 +331,7 @@ export class AppComponent implements OnInit, OnDestroy {
       .generateSummary(currentTranscription)
       .then((data) => {
         console.log('Summary data received:', data);
+        this.processingTranscription = false;
 
         try {
           // Try to parse the response as structured medical data
@@ -225,6 +342,7 @@ export class AppComponent implements OnInit, OnDestroy {
             // Create a readable summary from the structured data
             this.summary =
               'Summary generated successfully. See structured data below.';
+            this.showToast('success', 'Summary Generated', 'Your medical report has been created successfully.', 5000);
           } else if (typeof data === 'string') {
             // If it's a string, use it directly
             this.summary = data;
@@ -233,16 +351,20 @@ export class AppComponent implements OnInit, OnDestroy {
             try {
               const jsonData = JSON.parse(data);
               this.medicalHistory = jsonData;
+              this.showToast('success', 'Summary Generated', 'Your medical report has been created successfully.', 5000);
             } catch (e) {
               // Not JSON, just use as text
               console.log('Response is not JSON, using as plain text');
+              this.showToast('success', 'Summary Generated', 'Your text summary has been created.', 5000);
             }
           } else {
             this.summary = 'Received response in unknown format';
+            this.showToast('warning', 'Unusual Response', 'The server returned data in an unexpected format.', 5000);
           }
         } catch (error) {
           console.error('Error processing summary:', error);
           this.summary = 'Error processing summary response';
+          this.showToast('error', 'Processing Error', 'Could not process the summary response.', 5000);
         }
 
         this.modelResponse = 'Model response received';
@@ -250,18 +372,9 @@ export class AppComponent implements OnInit, OnDestroy {
       .catch((err) => {
         console.error('WebSocket error:', err);
         this.summary = 'Error: Could not generate summary. Please try again.';
+        this.processingTranscription = false;
+        this.showToast('error', 'Connection Error', 'Could not generate summary. Please try again.', 5000);
       });
-  }
-
-  // Method to handle the Get Started button click
-  onGetStarted(): void {
-    // Scroll to the transcription section smoothly
-    document
-      .getElementById('transcription-section')
-      ?.scrollIntoView({ behavior: 'smooth' });
-    console.log(
-      'Get Started button clicked and scrolled to transcription section'
-    );
   }
 
   // Toggle Ask AI form visibility
@@ -283,6 +396,8 @@ export class AppComponent implements OnInit, OnDestroy {
 
     // Show loading state
     this.llamaResponse = 'Processing request...';
+    this.processingTranscription = true;
+    this.showToast('info', 'AI Request', 'Processing your question...', 3000);
 
     // Get the appropriate transcription based on the active section
     let currentTranscription = this.transcription;
@@ -303,6 +418,8 @@ export class AppComponent implements OnInit, OnDestroy {
 
     if (!this.query || this.query.trim() === '') {
       this.llamaResponse = 'Error: Please enter a question to ask.';
+      this.processingTranscription = false;
+      this.showToast('error', 'Empty Question', 'Please enter a question to ask.', 3000);
       return;
     }
 
@@ -310,11 +427,13 @@ export class AppComponent implements OnInit, OnDestroy {
       .askAI(currentTranscription, this.query)
       .then((response) => {
         console.log('Llama response received:', response);
+        this.processingTranscription = false;
 
         // Handle different response formats
         if (response.startsWith('Error:')) {
           // If it's an error message
           this.llamaResponse = response;
+          this.showToast('error', 'AI Error', 'The AI service returned an error.', 5000);
         } else {
           try {
             // Try to parse as JSON if it looks like JSON
@@ -325,17 +444,21 @@ export class AppComponent implements OnInit, OnDestroy {
               try {
                 const jsonData = JSON.parse(response);
                 this.llamaResponse = JSON.stringify(jsonData, null, 2);
+                this.showToast('success', 'Response Received', 'The AI has answered your question.', 3000);
               } catch (e) {
                 // Not valid JSON, use as is
                 this.llamaResponse = response;
+                this.showToast('success', 'Response Received', 'The AI has answered your question.', 3000);
               }
             } else {
               // Plain text response
               this.llamaResponse = response;
+              this.showToast('success', 'Response Received', 'The AI has answered your question.', 3000);
             }
           } catch (error) {
             console.error('Error processing Llama response:', error);
             this.llamaResponse = response || 'Error processing response';
+            this.showToast('warning', 'Processing Issue', 'There was an issue processing the AI response.', 5000);
           }
         }
       })
@@ -344,6 +467,8 @@ export class AppComponent implements OnInit, OnDestroy {
         this.llamaResponse = `Error: ${
           err.message || 'Error communicating with AI service'
         }`;
+        this.processingTranscription = false;
+        this.showToast('error', 'Connection Error', 'Could not connect to the AI service.', 5000);
       });
   }
 
@@ -352,6 +477,7 @@ export class AppComponent implements OnInit, OnDestroy {
       this.selectedFile = event.target.files[0];
       this.selectedFileName = this.selectedFile ? this.selectedFile.name : '';
       console.log('File selected:', this.selectedFileName);
+      this.showToast('info', 'File Selected', `${this.selectedFileName} ready for upload.`, 3000);
     } else {
       this.selectedFile = null;
       this.selectedFileName = '';
@@ -362,11 +488,22 @@ export class AppComponent implements OnInit, OnDestroy {
     if (!this.selectedFile) {
       console.error('No file selected');
       this.uploadedTranscription = 'Error: No file selected';
+      this.showToast('error', 'Upload Error', 'No file selected for upload.', 3000);
       return;
     }
 
     // Show loading state
     this.uploadedTranscription = 'Uploading and transcribing...';
+    this.isUploading = true;
+    this.uploadProgress = 0;
+    this.showToast('info', 'Upload Started', 'Uploading and transcribing your audio...', 3000);
+
+    // Simulate progress updates (actual progress would be server-dependent)
+    const progressInterval = setInterval(() => {
+      if (this.uploadProgress < 90) {
+        this.uploadProgress += 10;
+      }
+    }, 500);
 
     const formData = new FormData();
     formData.append('file', this.selectedFile);
@@ -374,37 +511,51 @@ export class AppComponent implements OnInit, OnDestroy {
     const uploadUrl = `${this.wsService.getHttpBaseUrl()}/upload/`;
     this.http.post<any>(uploadUrl, formData).subscribe({
       next: (response) => {
-        if (response && response.transcription) {
-          this.uploadedTranscription = response.transcription;
+        clearInterval(progressInterval);
+        this.uploadProgress = 100;
+        
+        setTimeout(() => {
+          this.isUploading = false;
+          
+          if (response && response.transcription) {
+            this.uploadedTranscription = response.transcription;
 
-          // If the transcription is empty, provide feedback
-          if (this.uploadedTranscription.trim() === '') {
-            this.uploadedTranscription =
-              'No speech detected in the audio file.';
+            // If the transcription is empty, provide feedback
+            if (this.uploadedTranscription.trim() === '') {
+              this.uploadedTranscription =
+                'No speech detected in the audio file.';
+              this.showToast('warning', 'No Speech Detected', 'No speech could be detected in the audio file.', 5000);
+            } else {
+              this.showToast('success', 'Transcription Complete', 'Your audio has been transcribed successfully.', 3000);
+            }
+
+            // Optionally copy to main transcription area for further processing
+            if (
+              this.uploadedTranscription &&
+              this.uploadedTranscription !==
+                'No speech detected in the audio file.'
+            ) {
+              this.transcription = this.uploadedTranscription;
+            }
+
+            console.log('Upload response:', response);
+          } else {
+            this.uploadedTranscription = 'Error: Invalid response from server';
+            console.error('Invalid upload response:', response);
+            this.showToast('error', 'Server Error', 'Received invalid response from server.', 5000);
           }
-
-          // Optionally copy to main transcription area for further processing
-          if (
-            this.uploadedTranscription &&
-            this.uploadedTranscription !==
-              'No speech detected in the audio file.'
-          ) {
-            this.transcription = this.uploadedTranscription;
-          }
-
-          console.log('Upload response:', response);
-        } else {
-          this.uploadedTranscription = 'Error: Invalid response from server';
-          console.error('Invalid upload response:', response);
-        }
+        }, 500);
       },
       error: (error) => {
+        clearInterval(progressInterval);
+        this.isUploading = false;
         console.error('Upload error:', error);
         this.uploadedTranscription = `Error: ${
           error.status === 0
             ? 'Could not connect to server'
             : error.message || 'Failed to upload audio file'
         }`;
+        this.showToast('error', 'Upload Failed', 'Could not upload the audio file.', 5000);
       },
     });
   }
@@ -419,6 +570,7 @@ export class AppComponent implements OnInit, OnDestroy {
     if (!this.isRecording) {
       // Starting recording
       this.transcription = 'Preparing to record...';
+      this.showToast('info', 'Recording Setup', 'Preparing to record...', 3000);
 
       try {
         // Set up direct WebSocket connection for real-time transcription
@@ -453,6 +605,7 @@ export class AppComponent implements OnInit, OnDestroy {
                   if (this.isRecording) {
                     this.transcription +=
                       '\n[Transcription error: Connection to server was lost. Still recording...]';
+                      this.showToast('warning', 'Connection Issue', 'Transcription connection lost, but still recording.', 5000);
                   }
                 }),
               complete: () =>
@@ -493,16 +646,19 @@ export class AppComponent implements OnInit, OnDestroy {
 
         this.isRecording = true;
         this.transcription = 'Recording... Speak now';
+        this.showToast('success', 'Recording Started', 'Speak clearly into your microphone.', 3000);
         console.log('Recording started with real-time transcription');
       } catch (err) {
         console.error('Error accessing microphone', err);
         this.transcription = `Microphone access error: ${
           err instanceof Error ? err.message : 'Could not access microphone'
         }`;
+        this.showToast('error', 'Microphone Error', 'Could not access your microphone.', 5000);
       }
     } else {
       // Stopping recording
       this.stopRecording();
+      this.showToast('info', 'Recording Stopped', 'Processing your audio...', 3000);
     }
   }
 
@@ -526,6 +682,7 @@ export class AppComponent implements OnInit, OnDestroy {
       this.processingTranscription = true;
       this.createAudioFromChunks();
       this.processingTranscription = false;
+      this.showToast('success', 'Recording Processed', 'Your audio has been processed successfully.', 3000);
     }
 
     this.isRecording = false;
@@ -566,6 +723,7 @@ export class AppComponent implements OnInit, OnDestroy {
       console.log('Audio URL created:', this.liveAudioUrl);
     } catch (error) {
       console.error('Error creating audio from chunks:', error);
+      this.showToast('error', 'Audio Processing Error', 'Could not process the recorded audio.', 5000);
     }
   }
 
