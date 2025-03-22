@@ -474,15 +474,31 @@ body {
   min-height: 100vh;
 }
 
+/* Add styles for centered content when sidebar is collapsed */
+.sidebar-collapsed .main-content {
+  margin-left: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sidebar-collapsed .main-content > * {
+  width: 100%;
+  max-width: 1200px;
+}
+
 /* ===== ENHANCED CARD STYLING ===== */
 .card {
   background: var(--card-bg);
   border-radius: var(--border-radius);
   padding: 30px;
+  align-items: center;
   margin-bottom: 25px;
   box-shadow: var(--card-shadow);
   transition: all 0.25s cubic-bezier(0.25, 0.8, 0.25, 1);
-  max-width: 900px;
+  max-width: 1000px;
   margin-left: auto;
   margin-right: auto;
   border: 1px solid rgba(33, 37, 41, 0.05);

@@ -1,6 +1,6 @@
 <!-- Improved UI with enhanced UX components and modern design patterns -->
  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-<div class="app-container">
+<div class="app-container" [class.sidebar-collapsed]="sidebarCollapsed">
   <!-- Mobile Menu Toggle for Responsive Design -->
   <div class="mobile-menu-toggle" (click)="toggleSidebar()">
     <i class="material-icons">menu</i>
