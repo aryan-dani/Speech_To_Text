@@ -1,4 +1,4 @@
-import gradio as gr
+import gradio as gr # type: ignore
 import aiohttp
 import asyncio
 import json
