@@ -63,7 +63,6 @@
   position: relative;
 }
 
-
 #logo {
   width: 90px;
   height: 90px;
@@ -243,6 +242,10 @@
   box-shadow: var(--card-shadow);
   margin-bottom: var(--spacing-xl);
   border: 1px solid rgba(0, 0, 0, 0.08);
+  width: 100%;
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .transcription-header {
@@ -494,11 +497,11 @@ body {
   background: var(--card-bg);
   border-radius: var(--border-radius);
   padding: 30px;
-  align-items: center;
   margin-bottom: 25px;
   box-shadow: var(--card-shadow);
   transition: all 0.25s cubic-bezier(0.25, 0.8, 0.25, 1);
-  max-width: 1000px;
+  width: 100%; /* Set to fill the parent container */
+  max-width: 800px; /* Wider cards for better visibility */
   margin-left: auto;
   margin-right: auto;
   border: 1px solid rgba(33, 37, 41, 0.05);
@@ -518,13 +521,26 @@ body {
   transition: opacity 0.25s ease;
 }
 
-.card:hover {
+/* Center card container */
+.cards-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+.card:hover, .card:focus-within {
   transform: translateY(-5px);
   box-shadow: 0 18px 35px rgba(33, 37, 41, 0.1);
 }
 
+.card:focus-within::before,
 .card:hover::before {
   opacity: 1;
+}
+
+.card-content {
+  width: 100%;
 }
 
 .section-title {
@@ -852,6 +868,9 @@ textarea[readonly] {
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 25px;
   margin-bottom: 30px;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto 30px;
 }
 
 .sample-item {
@@ -867,6 +886,8 @@ textarea[readonly] {
   height: 100%;
   display: flex;
   flex-direction: column;
+  min-height: 200px;
+  width: 100%;
 }
 
 .sample-item::before {
@@ -1124,6 +1145,10 @@ audio {
   position: relative;
   overflow: hidden;
   transition: all 0.3s ease;
+  width: 100%;
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .medical-card:hover {
@@ -1287,6 +1312,10 @@ audio {
   border: 1px solid rgba(33, 37, 41, 0.05);
   position: relative;
   transition: transform 0.25s ease, box-shadow 0.25s ease;
+  width: 100%;
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .ai-response-container:hover {
@@ -1380,6 +1409,10 @@ audio {
   .medical-data-grid {
     grid-template-columns: repeat(2, 1fr);
   }
+
+  .card, .medical-card, .ai-response-container, .transcription-container {
+    max-width: 90%;
+  }
 }
 
 @media (max-width: 768px) {
@@ -1438,6 +1471,11 @@ audio {
   
   .samples-list {
     grid-template-columns: 1fr;
+  }
+
+  .card, .medical-card, .ai-response-container, .transcription-container {
+    max-width: 100%;
+    padding: 20px;
   }
 }
 
@@ -1981,4 +2019,572 @@ input:checked + .toggle-slider:before {
   .option-group {
     width: 100%;
   }
+}
+
+/* Add these professional animation enhancements to the end of the file */
+
+/* ===== ENHANCED PROFESSIONAL ANIMATIONS ===== */
+@keyframes gentle-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+@keyframes subtle-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.02); }
+}
+
+@keyframes elegant-fade-in {
+  from { opacity: 0; transform: translateY(15px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes smooth-highlight {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* Apply animations to specific elements */
+.card, .medical-card, .ai-response-container {
+  transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), 
+              box-shadow 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.card:hover, .medical-card:hover, .ai-response-container:hover {
+  transform: translateY(-5px) scale(1.01);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+}
+
+.section-title {
+  position: relative;
+  overflow: hidden;
+}
+
+.section-title::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 80px;
+  height: 3px;
+  background: var(--gradient-primary);
+  border-radius: 3px;
+  transform-origin: left;
+  transition: width 0.3s ease;
+}
+
+.section-title:hover::after {
+  width: 100px;
+}
+
+/* Enhanced Status Indicators */
+.status-indicator-container {
+  transition: transform 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.status-indicator-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(120deg, rgba(255,255,255,0) 30%, rgba(255,255,255,.5) 38%, rgba(255,255,255,0) 48%);
+  background-size: 200% 100%;
+  animation: none;
+  opacity: 0;
+}
+
+.status-indicator-container:hover::before {
+  opacity: 1;
+  animation: smooth-highlight 1.5s infinite linear;
+}
+
+.status-indicator-container.recording:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(239, 71, 111, 0.15);
+}
+
+.status-indicator-container.processing:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(252, 140, 116, 0.15);
+}
+
+.status-indicator-container.success:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(72, 191, 227, 0.15);
+}
+
+/* Enhanced Record Button Animation */
+.record-button {
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  position: relative;
+  overflow: hidden;
+}
+
+.record-button::before {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0) 70%);
+  top: -50%;
+  left: -50%;
+  transform: scale(0);
+  transition: transform 0.5s ease-out;
+  border-radius: 50%;
+}
+
+.record-button:hover::before {
+  transform: scale(3);
+}
+
+.record-button.recording {
+  animation: recordingPulse 2s infinite;
+  box-shadow: 0 0 0 rgba(239, 71, 111, 0.6);
+  transform-origin: center;
+}
+
+@keyframes recordingPulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(239, 71, 111, 0.6);
+    transform: scale(1);
+  }
+  70% {
+    box-shadow: 0 0 0 15px rgba(239, 71, 111, 0);
+    transform: scale(1.03);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(239, 71, 111, 0);
+    transform: scale(1);
+  }
+}
+
+/* Enhanced audio visualization */
+.audio-bars {
+  transition: opacity 0.3s ease;
+}
+
+.audio-visualizer:hover .audio-bars {
+  opacity: 1;
+}
+
+.audio-bar {
+  transition: height 0.2s ease-in-out, background-color 0.2s ease;
+}
+
+.audio-bar.active {
+  box-shadow: 0 0 8px rgba(67, 97, 238, 0.4);
+}
+
+/* Enhanced Button Animations */
+button {
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  position: relative;
+  overflow: hidden;
+}
+
+button::after {
+  content: "";
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.3) 10%, transparent 10.01%);
+  background-repeat: no-repeat;
+  background-position: 50%;
+  transform: scale(10, 10);
+  opacity: 0;
+  transition: transform 0.5s, opacity 0.5s;
+}
+
+button:active::after {
+  transform: scale(0, 0);
+  opacity: 0.3;
+  transition: 0s;
+}
+
+/* Professional loading animation */
+.loading-spinner {
+  border: 4px solid rgba(66, 133, 244, 0.1);
+  border-radius: 50%;
+  border-top-color: var(--primary-color);
+  width: 40px;
+  height: 40px;
+  animation: professional-spin 1s cubic-bezier(0.68, -0.55, 0.27, 1.55) infinite;
+}
+
+@keyframes professional-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* File upload area enhancements */
+.upload-area {
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.upload-area:hover .upload-icon {
+  animation: gentle-float 3s ease infinite;
+  color: var(--primary-color);
+}
+
+/* Toast notification enhancements */
+.toast {
+  animation: toast-slide-in 0.5s forwards, toast-fade-out 0.5s 4.5s forwards;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.toast:hover {
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+}
+
+@keyframes toast-slide-in {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes toast-fade-out {
+  from { transform: translateX(0); opacity: 1; }
+  to { transform: translateX(100%); opacity: 0; }
+}
+
+/* Enhanced sidebar animation */
+.sidebar {
+  transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275), 
+              box-shadow 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.sidebar-nav li {
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  position: relative;
+  overflow: hidden;
+}
+
+.sidebar-nav li::after {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  background: linear-gradient(120deg, rgba(255,255,255,0) 30%, rgba(255,255,255,.2) 38%, rgba(255,255,255,0) 48%);
+  background-size: 200% 100%;
+  animation: none;
+  opacity: 0;
+}
+
+.sidebar-nav li:hover::after {
+  opacity: 1;
+  animation: smooth-highlight 1.5s infinite linear;
+}
+
+/* AI Response enhancements */
+.ai-response-container {
+  position: relative;
+  overflow: hidden;
+}
+
+.ai-response-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 0;
+  background: var(--gradient-primary);
+  transition: height 0.4s ease;
+}
+
+.ai-response-container:hover::before {
+  height: 100%;
+}
+
+.ai-avatar {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.ai-avatar:hover {
+  transform: scale(1.1) rotate(5deg);
+  box-shadow: 0 5px 15px rgba(67, 97, 238, 0.3);
+}
+
+/* Medical card enhancements */
+.medical-card-title {
+  position: relative;
+  transition: transform 0.3s ease;
+}
+
+.medical-card-title::after {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: var(--gradient-primary);
+  transition: width 0.3s ease;
+}
+
+.medical-card:hover .medical-card-title::after {
+  width: 100%;
+}
+
+.medical-card:hover .medical-card-title {
+  transform: translateY(-2px);
+}
+
+/* Enhanced tooltip animation */
+.tooltip .tooltiptext {
+  transition: opacity 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), 
+              visibility 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275),
+              transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transform: translateY(10px);
+}
+
+.tooltip:hover .tooltiptext {
+  transform: translateY(0);
+}
+
+/* Page transition effect */
+.main-content {
+  animation: page-fade-in 0.6s ease-out forwards;
+}
+
+@keyframes page-fade-in {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Enhance form elements */
+.form-input, textarea {
+  transition: all 0.3s ease;
+}
+
+.form-input:focus, textarea:focus {
+  transform: translateY(-2px);
+}
+
+/* Enhanced toggle switch */
+.toggle-slider {
+  transition: background-color 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  overflow: hidden;
+}
+
+.toggle-slider::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0) 70%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.toggle-slider:hover::after {
+  opacity: 1;
+}
+
+.toggle-slider:before {
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+input:checked + .toggle-slider:before {
+  transform: translateX(24px) scale(1.1);
+}
+
+/* ===== SUBTLE SIDEBAR ENHANCEMENTS ===== */
+.sidebar-nav li {
+  /* Keep existing styles */
+  /* Add improved focus and keyboard navigation */
+  position: relative;
+  transition: all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.sidebar-nav li:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.5) inset;
+  transform: translateX(3px);
+}
+
+.sidebar-nav li:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.6);
+  outline-offset: -2px;
+}
+
+/* Improved visual feedback for active state */
+.sidebar-nav li.active {
+  /* Keep existing styles */
+  position: relative;
+}
+
+.sidebar-nav li.active::after {
+  content: '';
+  position: absolute;
+  right: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: var(--secondary-color);
+  box-shadow: 0 0 8px rgba(72, 191, 227, 0.5);
+}
+
+.sidebar-nav li:hover {
+  /* Keep existing styles */
+  transform: translateX(5px);
+}
+
+/* Subtle glow effect on hover for active state */
+.sidebar-nav li.active:hover {
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(255, 255, 255, 0.2) inset;
+}
+
+.nav-icon {
+  /* Keep existing styles */
+  transition: all 0.25s ease;
+}
+
+/* Enhanced icon hover effect */
+.sidebar-nav li:hover .nav-icon {
+  transform: scale(1.1);
+  color: var(--secondary-color);
+}
+
+/* ===== IMPROVED BUTTON STYLING ===== */
+button {
+  /* Keep existing styles */
+  position: relative;
+  transition: all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+}
+
+button:active {
+  transform: translateY(1px);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+  transition: all 0.1s ease;
+}
+
+/* Improved focus state for accessibility */
+button:focus-visible {
+  outline: 3px solid rgba(67, 97, 238, 0.5);
+  outline-offset: 2px;
+}
+
+/* Enhanced Ask AI button with more prominent styling */
+.ask-ai-button {
+  /* Keep existing styles */
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.ask-ai-button::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: linear-gradient(45deg, 
+    rgba(72, 191, 227, 0) 0%, 
+    rgba(72, 191, 227, 0.8) 50%, 
+    rgba(72, 191, 227, 0) 100%);
+  background-size: 200% 200%;
+  animation: shimmer 2s linear infinite;
+  border-radius: 14px;
+  z-index: -1;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+.ask-ai-button:hover::before {
+  opacity: 1;
+}
+
+.enhanced-ai-button {
+  /* Additional styles for the enhanced Ask AI button */
+  box-shadow: 0 5px 15px rgba(72, 191, 227, 0.3);
+}
+
+.enhanced-ai-button:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(72, 191, 227, 0.4);
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Improved Record Button */
+.record-button {
+  /* Keep existing styles */
+  position: relative;
+  overflow: hidden;
+}
+
+/* Add subtle pulse effect even in non-recording state */
+.record-button::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.record-button:hover::after {
+  opacity: 1;
+}
+
+/* Enhanced toggle switches */
+.toggle-switch {
+  /* Keep existing styles */
+  cursor: pointer;
+}
+
+.toggle-slider {
+  /* Keep existing styles */
+  transition: background-color 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.toggle-slider:focus-within {
+  box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.3);
+}
+
+.toggle-slider:before {
+  /* Keep existing styles */
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.25s ease;
+}
+
+input:checked + .toggle-slider:before {
+  transform: translateX(24px);
+  background-color: #ffffff;
+}
+
+/* Subtle user feedback when item is clicked */
+.feedback-click {
+  animation: feedback-pulse 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@keyframes feedback-pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(0.97); }
+  100% { transform: scale(1); }
 }

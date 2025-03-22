@@ -23,6 +23,10 @@ export class AppComponent implements OnInit, OnDestroy {
   clearSections: boolean = false;
   sidebarCollapsed: boolean = false;
   
+  // Add missing properties
+  isSidebarOpen: boolean = false;
+  isAskAIEnabled: boolean = true;
+  
   title = 'medical-transcription-app';
   receivedMessages: string[] = [];
   transcription: string = '';
@@ -133,6 +137,9 @@ export class AppComponent implements OnInit, OnDestroy {
       this.boundCheckScreenSize = this.checkScreenSize.bind(this);
       window.addEventListener('resize', this.boundCheckScreenSize);
     }
+    
+    // Initialize keyboard navigation
+    this.initKeyboardNavigation();
   }
 
   ngOnDestroy(): void {
@@ -834,5 +841,119 @@ export class AppComponent implements OnInit, OnDestroy {
       int16Array[i] = s < 0 ? s * 0x8000 : s * 0x7fff;
     }
     return int16Array;
+  }
+
+  // Handle keyboard navigation for sidebar
+  initKeyboardNavigation() {
+    console.log('Initializing keyboard navigation...');
+    
+    // Handle Escape key to close sidebar on mobile
+    document.addEventListener('keydown', (event: KeyboardEvent) => {
+      console.log('Key pressed:', event.key);
+      
+      if (event.key === 'Escape') {
+        if (this.sidebarActive && window.innerWidth <= 768) {
+          console.log('Escape pressed, toggling sidebar');
+          this.toggleSidebar();
+        }
+      }
+      
+      // Add keyboard shortcut for Ask AI (Alt+A)
+      if (event.key === 'a' && event.altKey) {
+        console.log('Alt+A pressed, toggling Ask AI');
+        this.toggleAskAI();
+        event.preventDefault();
+      }
+      
+      // Add keyboard shortcut for toggling recording (Alt+R)
+      if (event.key === 'r' && event.altKey) {
+        console.log('Alt+R pressed, toggling recording');
+        this.toggleRecording();
+        event.preventDefault();
+      }
+    });
+    
+    // Enable Ask AI button regardless of other conditions
+    this.enableIndependentAskAI();
+    
+    // Force focus outlines for keyboard users
+    document.addEventListener('keydown', () => {
+      document.body.classList.add('keyboard-user');
+    });
+    
+    document.addEventListener('mousedown', () => {
+      document.body.classList.remove('keyboard-user');
+    });
+    
+    console.log('Keyboard navigation initialized');
+  }
+
+  // Make Ask AI button work independently
+  enableIndependentAskAI() {
+    // Remove any conditions that disable the Ask AI button
+    this.isAskAIEnabled = true;
+    
+    // If this method is called after view init, we need to manually update the button
+    setTimeout(() => {
+      const askAIButton = document.querySelector('.ask-ai-button') as HTMLButtonElement;
+      if (askAIButton) {
+        console.log('Found Ask AI button, enabling independently');
+        askAIButton.disabled = false;
+        
+        // Add stronger click handler
+        const clickHandler = () => {
+          console.log('Ask AI button clicked from TypeScript handler');
+          askAIButton.classList.add('feedback-click');
+          setTimeout(() => {
+            askAIButton.classList.remove('feedback-click');
+          }, 300);
+          
+          // Toggle the Ask AI form
+          this.zone.run(() => {
+            this.toggleAskAI();
+          });
+          
+          // If there's no text in the transcription, provide a helpful message
+          if (!this.transcription || this.transcription.trim() === '') {
+            this.showToast('info', 'No Transcription', 'No transcription available. You can still ask general medical questions.', 3000);
+          }
+        };
+        
+        // Use capture to ensure our handler runs
+        askAIButton.addEventListener('click', clickHandler, true);
+        
+        // Ensure keyboard activation works
+        askAIButton.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            clickHandler();
+          }
+        }, true);
+      }
+    }, 500);
+  }
+
+  // Add method to ensure keyboard interactivity for all cards
+  ensureCardKeyboardAccessibility() {
+    setTimeout(() => {
+      const cards = document.querySelectorAll('.card, .sample-item, .medical-card');
+      cards.forEach(card => {
+        if (!card.hasAttribute('tabindex')) {
+          card.setAttribute('tabindex', '0');
+        }
+        
+        (card as HTMLElement).addEventListener('keydown', (e: KeyboardEvent) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            (card as HTMLElement).click();
+          }
+        });
+      });
+    }, 1000);
+  }
+
+  ngAfterViewInit() {
+    // Call this to ensure keyboard accessibility is set up after view is ready
+    this.ensureCardKeyboardAccessibility();
   }
 }

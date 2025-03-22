@@ -9,11 +9,223 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <!-- Add Font Awesome for improved icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    /* Professional preloader */
+    .app-preloader {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: #f8f9fa;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+      transition: opacity 0.5s ease-out, visibility 0.5s ease-out;
+    }
+    
+    .app-preloader.hidden {
+      opacity: 0;
+      visibility: hidden;
+    }
+    
+    .preloader-content {
+      text-align: center;
+    }
+    
+    .preloader-spinner {
+      width: 50px;
+      height: 50px;
+      border: 4px solid rgba(67, 97, 238, 0.1);
+      border-radius: 50%;
+      border-top-color: #4361ee;
+      animation: preloader-spin 1s cubic-bezier(0.68, -0.55, 0.27, 1.55) infinite;
+      margin: 0 auto 20px;
+    }
+    
+    .preloader-text {
+      font-family: 'Poppins', sans-serif;
+      color: #212529;
+      font-size: 16px;
+      font-weight: 500;
+    }
+    
+    @keyframes preloader-spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    /* Keyboard accessibility helper */
+    .keyboard-shortcut-tip {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: rgba(33, 37, 41, 0.95);
+      color: white;
+      padding: 16px 24px;
+      border-radius: 8px;
+      font-size: 15px;
+      z-index: 9999;
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      max-width: 90%;
+      line-height: 1.6;
+    }
+    
+    .keyboard-shortcut-tip.show {
+      opacity: 1;
+    }
+    
+    /* Forces keyboard focus styles to be visible */
+    .keyboard-user :focus {
+      outline: 3px solid rgba(67, 97, 238, 0.5) !important;
+      outline-offset: 2px !important;
+    }
+    
+    /* Enhanced button styling */
+    button:focus-visible {
+      outline: 3px solid rgba(67, 97, 238, 0.5) !important;
+      outline-offset: 2px !important;
+      box-shadow: 0 0 0 4px rgba(67, 97, 238, 0.2) !important;
+    }
+    
+    kbd {
+      background-color: #f8f9fa;
+      color: #212529;
+      border: 1px solid #dee2e6;
+      border-radius: 3px;
+      box-shadow: 0 1px 1px rgba(0,0,0,.12);
+      font-family: monospace;
+      font-size: 0.9em;
+      padding: 2px 5px;
+      margin: 0 2px;
+    }
+    
+    /* Additional global keyboard shortcut support */
+    .global-key-handler {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: -1;
+      pointer-events: none;
+    }
+  </style>
 </head>
 <body class="mat-typography">
+  <!-- Professional preloader -->
+  <div class="app-preloader" id="appPreloader">
+    <div class="preloader-content">
+      <div class="preloader-spinner"></div>
+      <div class="preloader-text">Loading Medical Transcription System...</div>
+    </div>
+  </div>
+  
+  <!-- Enhanced keyboard shortcuts help tooltip with larger text -->
+  <div class="keyboard-shortcut-tip" id="keyboardTip">
+    <strong>Keyboard Shortcuts Available:</strong><br>
+    <kbd>Tab</kbd> to navigate | <kbd>Enter</kbd> to activate | <kbd>Esc</kbd> to close menus<br>
+    <kbd>Alt</kbd>+<kbd>A</kbd> Ask AI assistant | <kbd>Alt</kbd>+<kbd>R</kbd> Toggle recording<br>
+    <kbd>↑</kbd>/<kbd>↓</kbd> Navigate sidebar items
+  </div>
+  
+  <!-- Global key handler element -->
+  <div id="globalKeyHandler" class="global-key-handler" tabindex="0"></div>
+  
   <app-root></app-root>
   
   <!-- Animation Scripts -->
   <script src="assets/js/animations.js"></script>
+  <script>
+    // Hide preloader when application is loaded
+    window.addEventListener('load', function() {
+      setTimeout(function() {
+        document.getElementById('appPreloader').classList.add('hidden');
+      }, 500);
+      
+      // Show keyboard tip on first Tab press and make it more visible
+      let hasShownTip = sessionStorage.getItem('hasShownKeyboardTip');
+      
+      if (!hasShownTip) {
+        window.addEventListener('keydown', function showTipOnTab(e) {
+          if (e.key === 'Tab') {
+            const tip = document.getElementById('keyboardTip');
+            tip.classList.add('show');
+            
+            // Make it stay visible longer and fade out gently
+            setTimeout(function() {
+              tip.style.transition = 'opacity 1s ease';
+              tip.classList.remove('show');
+            }, 8000);
+            
+            sessionStorage.setItem('hasShownKeyboardTip', 'true');
+            document.body.classList.add('keyboard-user');
+            window.removeEventListener('keydown', showTipOnTab);
+          }
+        });
+      }
+      
+      // Setup keyboard usage detector
+      document.addEventListener('keydown', function(e) {
+        if (e.key === 'Tab') {
+          document.body.classList.add('keyboard-user');
+        }
+      });
+      
+      document.addEventListener('mousedown', function() {
+        document.body.classList.remove('keyboard-user');
+      });
+      
+      // Force CSS update to ensure focus styles are applied
+      document.querySelectorAll('a, button, [tabindex]').forEach(function(el) {
+        el.addEventListener('focus', function() {
+          this.classList.add('force-visible-focus');
+        });
+        
+        el.addEventListener('blur', function() {
+          this.classList.remove('force-visible-focus');
+        });
+      });
+    });
+    
+    // Setup global key handler
+    document.addEventListener('DOMContentLoaded', function() {
+      console.log('Setting up global key handler');
+      
+      // Add key handler that dispatches custom events
+      document.addEventListener('keydown', function(event) {
+        console.log('Global keydown:', event.key, event.altKey);
+        
+        // Don't handle events in input elements
+        if (event.target.tagName === 'INPUT' || 
+            event.target.tagName === 'TEXTAREA' || 
+            event.target.isContentEditable) {
+          return;
+        }
+        
+        // Create and dispatch custom events for our shortcuts
+        if (event.altKey && event.key.toLowerCase() === 'a') {
+          console.log('Dispatching custom askAI event');
+          document.dispatchEvent(new CustomEvent('app:askAI'));
+          event.preventDefault();
+        } 
+        else if (event.altKey && event.key.toLowerCase() === 'r') {
+          console.log('Dispatching custom toggleRecording event');
+          document.dispatchEvent(new CustomEvent('app:toggleRecording'));
+          event.preventDefault();
+        }
+        else if (event.key === 'Escape') {
+          console.log('Dispatching custom escape event');
+          document.dispatchEvent(new CustomEvent('app:escape'));
+        }
+      });
+    });
+  </script>
 </body>
 </html>
