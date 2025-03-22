@@ -19,6 +19,10 @@ import { WebSocketService } from './services/web-socket.service';
   styleUrls: ['./app.component.css'],
 })
 export class AppComponent implements OnInit, OnDestroy {
+  private boundCheckScreenSize: any;
+  clearSections: boolean = false;
+  sidebarCollapsed: boolean = false;
+  
   title = 'medical-transcription-app';
   receivedMessages: string[] = [];
   transcription: string = '';
@@ -102,30 +106,33 @@ export class AppComponent implements OnInit, OnDestroy {
     private http: HttpClient,
     private zone: NgZone
   ) {
-    // Check screen size only in browser environment
-    if (typeof window !== 'undefined') {
+    if (typeof document !== 'undefined') {
       this.checkScreenSize();
     }
   }
 
-  @HostListener('window:resize')
   checkScreenSize() {
-    if (typeof window !== 'undefined') {
-      this.isMobile = window.innerWidth < 768;
-      if (!this.isMobile && this.sidebarActive) {
-        this.sidebarActive = false;
-      }
+    if (typeof document !== 'undefined') {
+      this.isMobile = document.documentElement.clientWidth < 768;
+      this.sidebarActive = !this.isMobile;
     }
   }
 
   @HostListener('window:resize', ['$event'])
-  onResize(event: Event): void {
-    this.checkScreenSize();
+  onResize() {
+    if (typeof document !== 'undefined') {
+      this.checkScreenSize();
+    }
   }
 
   ngOnInit(): void {
     // Initialize application
     console.log('App initialized');
+    if (typeof document !== 'undefined') {
+      this.checkScreenSize();
+      this.boundCheckScreenSize = this.checkScreenSize.bind(this);
+      window.addEventListener('resize', this.boundCheckScreenSize);
+    }
   }
 
   ngOnDestroy(): void {
@@ -138,27 +145,70 @@ export class AppComponent implements OnInit, OnDestroy {
     }
 
     // Stop recording if active
-    this.stopRecording();
+    if (this.isRecording) {
+      this.stopRecording();
+    }
     
     // Clean up any audio URLs to prevent memory leaks
-    if (this.liveAudioUrl) {
+    if (this.liveAudioUrl && typeof URL !== 'undefined') {
       URL.revokeObjectURL(this.liveAudioUrl);
+    }
+
+    // Clean up audio element
+    if (this.audioElement) {
+      this.audioElement.pause();
+      this.audioElement.src = '';
+      this.audioElement = null;
+    }
+
+    // Remove window event listener using the stored reference
+    if (typeof window !== 'undefined' && this.boundCheckScreenSize) {
+      window.removeEventListener('resize', this.boundCheckScreenSize);
     }
   }
 
   // Sidebar toggle methods for mobile
   toggleSidebar(): void {
     this.sidebarActive = !this.sidebarActive;
+    if (this.isMobile) {
+      this.sidebarCollapsed = false;
+    }
   }
 
   closeSidebar(): void {
-    this.sidebarActive = false;
+    if (this.isMobile) {
+      this.sidebarActive = false;
+      this.sidebarCollapsed = false;
+    }
   }
 
+  // Update navigation method to properly clear previous content
   navigateTo(section: string): void {
-    this.activeSection = section;
-    if (this.isMobile) {
-      this.closeSidebar();
+    if (this.activeSection !== section) {
+      // Reset all content immediately
+      this.clearSections = true;
+      this.summary = '';
+      this.medicalHistory = null;
+      this.showAskAIForm = false;
+      this.llamaResponse = '';
+      this.transcription = '';
+      this.uploadedTranscription = '';
+      this.selectedFile = null;
+      this.selectedFileName = '';
+      this.isUploading = false;
+      this.selectedSample = null;
+      this.liveAudioUrl = '';
+      
+      // Change section after a short delay for transition
+      setTimeout(() => {
+        this.activeSection = section;
+        this.clearSections = false;
+      }, 300);
+      
+      // Close sidebar on mobile
+      if (this.isMobile) {
+        this.closeSidebar();
+      }
     }
   }
 
