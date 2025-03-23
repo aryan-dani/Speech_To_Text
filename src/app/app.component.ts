@@ -847,31 +847,41 @@ export class AppComponent implements OnInit, OnDestroy {
   initKeyboardNavigation() {
     console.log('Initializing keyboard navigation...');
     
-    // Handle Escape key to close sidebar on mobile
-    document.addEventListener('keydown', (event: KeyboardEvent) => {
-      console.log('Key pressed:', event.key);
-      
-      if (event.key === 'Escape') {
-        if (this.sidebarActive && window.innerWidth <= 768) {
-          console.log('Escape pressed, toggling sidebar');
-          this.toggleSidebar();
+    // Improved Escape key handling for better responsiveness
+    if (typeof window !== 'undefined') {
+      window.addEventListener('keydown', (event: KeyboardEvent) => {
+        console.log('Key pressed:', event.key);
+        
+        if (event.key === 'Escape') {
+          // More responsive escape handling
+          if (this.sidebarActive) {
+            console.log('Escape pressed, closing sidebar');
+            this.sidebarActive = false;
+            event.preventDefault();
+            event.stopPropagation();
+          } else if (this.showAskAIForm) {
+            console.log('Escape pressed, closing Ask AI form');
+            this.showAskAIForm = false;
+            event.preventDefault();
+            event.stopPropagation();
+          }
         }
-      }
-      
-      // Add keyboard shortcut for Ask AI (Alt+A)
-      if (event.key === 'a' && event.altKey) {
-        console.log('Alt+A pressed, toggling Ask AI');
-        this.toggleAskAI();
-        event.preventDefault();
-      }
-      
-      // Add keyboard shortcut for toggling recording (Alt+R)
-      if (event.key === 'r' && event.altKey) {
-        console.log('Alt+R pressed, toggling recording');
-        this.toggleRecording();
-        event.preventDefault();
-      }
-    });
+        
+        // Add keyboard shortcut for Ask AI (Alt+A)
+        if (event.key === 'a' && event.altKey) {
+          console.log('Alt+A pressed, toggling Ask AI');
+          this.toggleAskAI();
+          event.preventDefault();
+        }
+        
+        // Add keyboard shortcut for toggling recording (Alt+R)
+        if (event.key === 'r' && event.altKey) {
+          console.log('Alt+R pressed, toggling recording');
+          this.toggleRecording();
+          event.preventDefault();
+        }
+      }, true); // Added true for capture phase to ensure our handler runs first
+    }
     
     // Enable Ask AI button regardless of other conditions
     this.enableIndependentAskAI();
