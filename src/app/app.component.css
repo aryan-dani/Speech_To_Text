@@ -36,7 +36,8 @@
 .app-container {
   display: flex;
   min-height: 100vh;
-  background-color: var(--bg-secondary);
+  background-color: var(--background-light);
+  position: relative;
 }
 
 /* Improved Sidebar Styling */
@@ -222,16 +223,34 @@
 
 /* Improved Sidebar Overlay */
 .sidebar-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   background-color: rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(4px);
+  z-index: 999;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.sidebar-overlay.active {
+  opacity: 1;
+  visibility: visible;
 }
 
 /* Main Content Area */
 .main-content {
   margin-left: var(--sidebar-width);
-  padding: var(--spacing-xl);
+  padding: 30px;
   flex-grow: 1;
-  background-color: var(--bg-secondary);
+  background-color: var(--background-light);
+  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
 }
 
 /* Speech-to-Text specific components */
@@ -455,26 +474,6 @@ body {
   color: var(--text-color);
   overflow-x: hidden;
   line-height: 1.6;
-}
-
-/* ===== ENHANCED LAYOUT ===== */
-.app-container {
-  display: flex;
-  min-height: 100vh;
-  background-color: var(--background-light);
-  position: relative;
-}
-
-/* ===== IMPROVED MAIN CONTENT AREA ===== */
-.main-content {
-  margin-left: var(--sidebar-width);
-  padding: 30px;
-  flex-grow: 1;
-  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  position: relative;
-  z-index: 1;
-  background-color: var(--background-light);
-  min-height: 100vh;
 }
 
 /* Add styles for centered content when sidebar is collapsed */
@@ -1635,70 +1634,107 @@ a:focus, button:focus, input:focus, textarea:focus, select:focus, .collapsible-h
   position: fixed;
   bottom: 20px;
   right: 20px;
-  z-index: 1000;
+  z-index: 10000;
   display: flex;
-  flex-direction: column;
+  flex-direction: column-reverse; /* Stack from bottom up */
   gap: 10px;
   max-width: 350px;
+  width: auto;
+  height: auto;
+  pointer-events: none; /* Allow clicking through the container */
 }
 
 .toast {
   background-color: white;
   color: var(--text-color);
-  border-radius: 8px;
-  padding: 15px;
-  box-shadow: 0 8px 20px rgba(33, 37, 41, 0.12);
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 8px 25px rgba(33, 37, 41, 0.15);
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   overflow: hidden;
   position: relative;
-  animation: slideIn 0.3s forwards, fadeOut 0.3s 5s forwards;
+  transform: translateX(100%); /* Start off screen */
+  opacity: 0;
+  animation: toast-slide-in 0.4s forwards cubic-bezier(0.21, 1.02, 0.73, 1);
   border-left: 4px solid var(--primary-color);
+  pointer-events: auto; /* Make each toast interactive */
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  max-width: 100%;
+  margin-left: auto;
+}
+
+.toast.removing {
+  animation: toast-slide-out 0.3s forwards cubic-bezier(0.21, 1.02, 0.73, 1);
 }
 
 .toast.success {
-  border-left-color: var(--secondary-color);
+  border-left-color: #10b981;
 }
 
 .toast.error {
-  border-left-color: var(--danger-color);
+  border-left-color: #ef4444;
 }
 
 .toast.warning {
-  border-left-color: var(--accent-color);
+  border-left-color: #f59e0b;
+}
+
+.toast.info {
+  border-left-color: #3b82f6;
+}
+
+.toast:hover {
+  transform: translateY(-3px) !important;
+  box-shadow: 0 12px 30px rgba(33, 37, 41, 0.2);
 }
 
 .toast-icon {
   margin-right: 12px;
-  font-size: 20px;
-  color: var(--primary-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
-.toast.success .toast-icon {
-  color: var(--secondary-color);
+.toast-icon i {
+  font-size: 22px;
 }
 
-.toast.error .toast-icon {
-  color: var(--danger-color);
+.toast.success .toast-icon i {
+  color: #10b981;
 }
 
-.toast.warning .toast-icon {
-  color: var(--accent-color);
+.toast.error .toast-icon i {
+  color: #ef4444;
+}
+
+.toast.warning .toast-icon i {
+  color: #f59e0b;
+}
+
+.toast.info .toast-icon i {
+  color: #3b82f6;
 }
 
 .toast-content {
   flex: 1;
+  overflow: hidden;
 }
 
 .toast-title {
   font-weight: 600;
-  margin-bottom: 5px;
+  margin-bottom: 4px;
   font-size: 15px;
+  color: var(--text-color);
 }
 
 .toast-message {
-  font-size: 13px;
+  font-size: 14px;
   color: var(--text-secondary);
+  line-height: 1.4;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 .toast-close {
@@ -1706,14 +1742,24 @@ a:focus, button:focus, input:focus, textarea:focus, select:focus, .collapsible-h
   border: none;
   color: var(--text-secondary);
   cursor: pointer;
-  padding: 0;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   margin-left: 10px;
   box-shadow: none;
+  opacity: 0.7;
+  transition: opacity 0.2s ease;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
 }
 
 .toast-close:hover {
   color: var(--text-color);
-  transform: none;
+  opacity: 1;
+  background-color: rgba(0, 0, 0, 0.05);
+  transform: none !important;
   box-shadow: none;
 }
 
@@ -1723,29 +1769,66 @@ a:focus, button:focus, input:focus, textarea:focus, select:focus, .collapsible-h
   left: 0;
   height: 3px;
   background-color: var(--primary-color);
-  animation: progress 5s linear forwards;
+  width: 100%;
+  animation: toast-progress 5s linear forwards;
 }
 
 .toast.success .toast-progress {
-  background-color: var(--secondary-color);
+  background-color: #10b981;
 }
 
 .toast.error .toast-progress {
-  background-color: var(--danger-color);
+  background-color: #ef4444;
 }
 
 .toast.warning .toast-progress {
-  background-color: var(--accent-color);
+  background-color: #f59e0b;
 }
 
-@keyframes fadeOut {
-  from { opacity: 1; transform: translateX(0); }
-  to { opacity: 0; transform: translateX(20px); }
+.toast.info .toast-progress {
+  background-color: #3b82f6;
 }
 
-@keyframes progress {
+@keyframes toast-slide-in {
+  from { 
+    transform: translateX(100%);
+    opacity: 0; 
+  }
+  to { 
+    transform: translateX(0);
+    opacity: 1; 
+  }
+}
+
+@keyframes toast-progress {
   from { width: 100%; }
   to { width: 0%; }
+}
+
+@keyframes toast-slide-out {
+  from { 
+    transform: translateX(0); 
+    opacity: 1;
+  }
+  to { 
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}
+
+/* Improved responsive behavior for toast notifications */
+@media (max-width: 576px) {
+  .toast-container {
+    bottom: 10px;
+    right: 10px;
+    left: 10px;
+    max-width: none;
+  }
+  
+  .toast {
+    width: 100%;
+    padding: 12px;
+  }
 }
 
 /* ===== NEW COMPONENT: LOADING OVERLAY ===== */
@@ -1867,24 +1950,6 @@ a:focus, button:focus, input:focus, textarea:focus, select:focus, .collapsible-h
 }
 
 /* ===== RESPONSIVE SIDEBAR FOR MOBILE ===== */
-.sidebar-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  z-index: 999;
-  opacity: 0;
-  visibility: hidden;
-  transition: opacity 0.3s ease, visibility 0.3s ease;
-}
-
-.sidebar-overlay.active {
-  opacity: 1;
-  visibility: visible;
-}
-
 .mobile-menu-toggle {
   display: none;
 }

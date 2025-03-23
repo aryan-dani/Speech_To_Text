@@ -8,20 +8,20 @@ import {
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { HttpClient, HttpClientModule } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http'; // Removed deprecated HttpClientModule
 import { WebSocketService } from './services/web-socket.service';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [MatToolbarModule, FormsModule, CommonModule, HttpClientModule],
+  imports: [MatToolbarModule, FormsModule, CommonModule], // Removed deprecated HttpClientModule
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.css'],
 })
 export class AppComponent implements OnInit, OnDestroy {
   private boundCheckScreenSize: any;
   clearSections: boolean = false;
-  sidebarCollapsed: boolean = false;
+  sidebarCollapsed: boolean = true; // Set to true to make sidebar collapsed by default
   
   // Add missing properties
   isSidebarOpen: boolean = false;
@@ -99,11 +99,17 @@ export class AppComponent implements OnInit, OnDestroy {
   // Live recording properties
   isRecording: boolean = false;
   private audioContext: AudioContext | null = null;
-  private scriptNode: ScriptProcessorNode | null = null;
+  private scriptNode: any = null; // Changed from ScriptProcessorNode (deprecated)
   private source: MediaStreamAudioSourceNode | null = null;
   transcriptionStream: any;
   liveTranscriptionEnabled: boolean = true;
   processingTranscription: boolean = false;
+
+  // Audio analyzer for real-time visualization
+  private audioAnalyser: AnalyserNode | null = null;
+  private visualizationDataArray: Uint8Array | null = null;
+  private visualizationAnimationFrame: number | null = null;
+  private readonly BAR_COUNT = 15; // Number of visualization bars
 
   constructor(
     private wsService: WebSocketService,
@@ -118,7 +124,7 @@ export class AppComponent implements OnInit, OnDestroy {
   checkScreenSize() {
     if (typeof document !== 'undefined') {
       this.isMobile = document.documentElement.clientWidth < 768;
-      this.sidebarActive = !this.isMobile;
+      this.sidebarActive = !this.isMobile && !this.sidebarCollapsed; // Only active if not mobile and not collapsed
     }
   }
 
@@ -177,15 +183,14 @@ export class AppComponent implements OnInit, OnDestroy {
   // Sidebar toggle methods for mobile
   toggleSidebar(): void {
     this.sidebarActive = !this.sidebarActive;
-    if (this.isMobile) {
-      this.sidebarCollapsed = false;
-    }
+    this.sidebarCollapsed = !this.sidebarActive;
+    console.log('Sidebar toggled:', this.sidebarActive ? 'open' : 'collapsed');
   }
 
   closeSidebar(): void {
     if (this.isMobile) {
       this.sidebarActive = false;
-      this.sidebarCollapsed = false;
+      this.sidebarCollapsed = true;
     }
   }
 
@@ -219,37 +224,56 @@ export class AppComponent implements OnInit, OnDestroy {
     }
   }
 
-  // Toast notification methods
+  // Toast notification methods with improved functionality
   showToast(type: string, title: string, message: string, duration: number = 5000): void {
     const toast = {
       id: new Date().getTime(),
       type,
       title,
       message,
-      progress: 100
+      progress: 100,
+      removing: false
     };
     
-    this.toasts.unshift(toast);
-    
-    // Auto-remove toast after duration
-    setTimeout(() => {
-      this.removeToast(toast.id);
-    }, duration);
-    
-    // Update progress bar
-    const interval = setInterval(() => {
-      toast.progress -= 100 / (duration / 100);
-      if (toast.progress <= 0) {
-        clearInterval(interval);
-      }
-    }, 100);
+    this.zone.run(() => {
+      this.toasts.unshift(toast);
+      
+      // Auto-remove toast after duration
+      setTimeout(() => {
+        this.removeToast(toast.id);
+      }, duration);
+      
+      // Update progress bar
+      const interval = setInterval(() => {
+        if (toast.removing) {
+          clearInterval(interval);
+          return;
+        }
+        
+        toast.progress -= 100 / (duration / 100);
+        if (toast.progress <= 0) {
+          clearInterval(interval);
+        }
+      }, 100);
+    });
   }
   
   removeToast(id: number): void {
-    this.toasts = this.toasts.filter(toast => toast.id !== id);
+    const toastIndex = this.toasts.findIndex(t => t.id === id);
+    if (toastIndex > -1) {
+      // Mark as removing to start the animation
+      this.toasts[toastIndex].removing = true;
+      
+      // Remove after animation completes
+      setTimeout(() => {
+        this.zone.run(() => {
+          this.toasts = this.toasts.filter(toast => toast.id !== id);
+        });
+      }, 300); // Match animation duration
+    }
   }
 
-  // Visualization for audio recording
+  // Visualization for audio recording - replaced with real-time visualization
   getRandomHeight(index: number): number {
     if (!this.isRecording) return 10;
     
@@ -261,6 +285,23 @@ export class AppComponent implements OnInit, OnDestroy {
     const cosVal = Math.cos(time * 0.7 + index * 0.3);
     
     return baseHeight + (sinVal + cosVal) * maxVar / 2;
+  }
+
+  // Get the height for a visualization bar based on actual audio data
+  getVisualizationHeight(index: number): number {
+    if (!this.isRecording || !this.visualizationDataArray) {
+      return 10; // Default minimal height when not recording
+    }
+    
+    // Map the frequency data to the bar index
+    const dataLength = this.visualizationDataArray.length;
+    const barIndex = Math.floor((index / this.BAR_COUNT) * dataLength);
+    
+    // Get the value from the frequency data array
+    const value = this.visualizationDataArray[barIndex] || 0;
+    
+    // Scale the value to a percentage (0-100)
+    return 10 + (value / 255) * 90; // 10% minimum height, max 100%
   }
 
   // Sample methods
@@ -529,6 +570,7 @@ export class AppComponent implements OnInit, OnDestroy {
       });
   }
 
+  // Fixed file selection handling
   onFileSelected(event: any): void {
     if (event.target.files && event.target.files.length) {
       this.selectedFile = event.target.files[0];
@@ -541,6 +583,7 @@ export class AppComponent implements OnInit, OnDestroy {
     }
   }
 
+  // File upload handling
   uploadAudio(): void {
     if (!this.selectedFile) {
       console.error('No file selected');
@@ -672,39 +715,39 @@ export class AppComponent implements OnInit, OnDestroy {
             });
         }
 
-        // Set up audio context and script processor for capturing and processing audio
+        // Set up audio context and audio processing
         this.audioContext = new AudioContext({ sampleRate: 16000 });
         const stream = await navigator.mediaDevices.getUserMedia({
           audio: true,
         });
         this.source = this.audioContext.createMediaStreamSource(stream);
-        this.scriptNode = this.audioContext.createScriptProcessor(1024, 1, 1);
-
-        // Clear any previously recorded chunks when starting a new recording
-        this.recordedChunks = [];
-
-        // Process audio data when available
-        this.scriptNode.onaudioprocess = (event) => {
-          const inputBuffer = event.inputBuffer;
-          const channelData = inputBuffer.getChannelData(0); // Mono channel
-          const pcmData = this.floatTo16BitPCM(channelData);
-
-          // Store a copy of the recorded chunk for local playback
-          this.recordedChunks.push(new Int16Array(pcmData));
-
-          // Send to WebSocket for transcription
-          this.wsService.sendAudioData(pcmData.buffer); // Send as ArrayBuffer
-          console.log('Sending audio chunk:', pcmData.length, 'samples');
-        };
-
-        // Connect the audio nodes
-        this.source.connect(this.scriptNode);
-        this.scriptNode.connect(this.audioContext.destination); // Required to trigger onaudioprocess
+        
+        // Create analyzer node for real-time visualization
+        this.audioAnalyser = this.audioContext.createAnalyser();
+        this.audioAnalyser.fftSize = 256;
+        this.audioAnalyser.smoothingTimeConstant = 0.8;
+        this.visualizationDataArray = new Uint8Array(this.audioAnalyser.frequencyBinCount);
+        
+        // Connect the source to the analyzer
+        this.source.connect(this.audioAnalyser);
+        
+        // Start visualization animation
+        this.startVisualization();
+        
+        // Use AudioWorkletNode instead of deprecated ScriptProcessorNode when supported
+        if (this.audioContext.audioWorklet) {
+          // Modern approach (replace with AudioWorkletNode implementation)
+          // For now, fallback to ScriptProcessorNode
+          this.useScriptProcessorNode();
+        } else {
+          // Fallback for browsers that don't support AudioWorkletNode
+          this.useScriptProcessorNode();
+        }
 
         this.isRecording = true;
         this.transcription = 'Recording... Speak now';
         this.showToast('success', 'Recording Started', 'Speak clearly into your microphone.', 3000);
-        console.log('Recording started with real-time transcription');
+        console.log('Recording started with real-time transcription and visualization');
       } catch (err) {
         console.error('Error accessing microphone', err);
         this.transcription = `Microphone access error: ${
@@ -719,8 +762,36 @@ export class AppComponent implements OnInit, OnDestroy {
     }
   }
 
+  // Use deprecated ScriptProcessorNode (will be replaced with AudioWorkletNode in future)
+  private useScriptProcessorNode(): void {
+    this.scriptNode = this.audioContext!.createScriptProcessor(1024, 1, 1);
+    
+    // Clear any previously recorded chunks when starting a new recording
+    this.recordedChunks = [];
+
+    // Process audio data when available
+    this.scriptNode.onaudioprocess = (event: any) => {
+      const inputBuffer = event.inputBuffer;
+      const channelData = inputBuffer.getChannelData(0); // Mono channel
+      const pcmData = this.floatTo16BitPCM(channelData);
+
+      // Store a copy of the recorded chunk for local playback
+      this.recordedChunks.push(new Int16Array(pcmData));
+
+      // Send to WebSocket for transcription
+      this.wsService.sendAudioData(pcmData.buffer); // Send as ArrayBuffer
+    };
+
+    // Connect the audio nodes
+    this.source!.connect(this.scriptNode);
+    this.scriptNode.connect(this.audioContext!.destination); // Required to trigger onaudioprocess
+  }
+
   /** Stops recording and cleans up resources */
   private stopRecording(): void {
+    // Stop the visualization animation
+    this.stopVisualization();
+    
     if (this.source) {
       this.source.disconnect();
       this.source = null;
@@ -728,6 +799,9 @@ export class AppComponent implements OnInit, OnDestroy {
     if (this.scriptNode) {
       this.scriptNode.disconnect();
       this.scriptNode = null;
+    }
+    if (this.audioAnalyser) {
+      this.audioAnalyser = null;
     }
     if (this.audioContext) {
       this.audioContext.close();
@@ -745,7 +819,36 @@ export class AppComponent implements OnInit, OnDestroy {
     this.isRecording = false;
     console.log('Recording stopped');
   }
-
+  
+  /** Start real-time audio visualization */
+  private startVisualization(): void {
+    if (!this.visualizationAnimationFrame) {
+      this.updateVisualization();
+    }
+  }
+  
+  /** Stop real-time audio visualization */
+  private stopVisualization(): void {
+    if (this.visualizationAnimationFrame) {
+      cancelAnimationFrame(this.visualizationAnimationFrame);
+      this.visualizationAnimationFrame = null;
+    }
+  }
+  
+  /** Update the audio visualization based on real-time audio data */
+  private updateVisualization(): void {
+    if (!this.audioAnalyser || !this.visualizationDataArray) {
+      this.visualizationAnimationFrame = null;
+      return;
+    }
+    
+    // Get frequency data from the analyzer
+    this.audioAnalyser.getByteFrequencyData(this.visualizationDataArray);
+    
+    // Request the next animation frame
+    this.visualizationAnimationFrame = requestAnimationFrame(() => this.updateVisualization());
+  }
+  
   /** Creates an audio blob from recorded chunks and sets the audio URL */
   private createAudioFromChunks(): void {
     try {
@@ -853,18 +956,11 @@ export class AppComponent implements OnInit, OnDestroy {
         console.log('Key pressed:', event.key);
         
         if (event.key === 'Escape') {
-          // More responsive escape handling
-          if (this.sidebarActive) {
-            console.log('Escape pressed, closing sidebar');
-            this.sidebarActive = false;
-            event.preventDefault();
-            event.stopPropagation();
-          } else if (this.showAskAIForm) {
-            console.log('Escape pressed, closing Ask AI form');
-            this.showAskAIForm = false;
-            event.preventDefault();
-            event.stopPropagation();
-          }
+          // Toggle sidebar with Escape key
+          this.toggleSidebar();
+          console.log('Escape pressed, toggling sidebar');
+          event.preventDefault();
+          event.stopPropagation();
         }
         
         // Add keyboard shortcut for Ask AI (Alt+A)
