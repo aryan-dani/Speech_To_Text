@@ -81,7 +81,7 @@
             <span class="tooltiptext">Convert transcription into a structured medical report</span>
           </button>
           
-          <button class="action-button ask-ai-button tooltip" (click)="toggleAskAI()" [disabled]="!transcription || processingTranscription">
+          <button class="action-button ask-ai-button tooltip" (click)="toggleAskAI()">
             <i class="material-icons">psychology</i>
             Ask AI
             <span class="tooltiptext">Ask questions about the transcription</span>
@@ -194,7 +194,7 @@
             <i class="material-icons">auto_awesome</i> Generate Summary
           </button>
           
-          <button class="action-button ask-ai-button" (click)="toggleAskAI()" [disabled]="!uploadedTranscription || isUploading">
+          <button class="action-button ask-ai-button" (click)="toggleAskAI()">
             <i class="material-icons">psychology</i> Ask AI
           </button>
         </div>
@@ -280,7 +280,7 @@
             <i class="material-icons">auto_awesome</i> Generate Summary
           </button>
           
-          <button class="action-button ask-ai-button" (click)="toggleAskAI()" [disabled]="selectedSample === null">
+          <button class="action-button ask-ai-button" (click)="toggleAskAI()">
             <i class="material-icons">psychology</i> Ask AI
           </button>
         </div>

@@ -483,6 +483,7 @@ export class AppComponent implements OnInit, OnDestroy {
       this.query = '';
       this.llamaResponse = '';
     }
+    console.log('Ask AI form toggled:', this.showAskAIForm ? 'visible' : 'hidden');
   }
 
   // Updated method to ask Llama API using WebSocketService
