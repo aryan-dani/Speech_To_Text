@@ -4,6 +4,109 @@
 document.addEventListener('DOMContentLoaded', function() {
   // Initialize animations once DOM is fully loaded
   setTimeout(initializeProfessionalAnimations, 800);
+  
+  // Make AI response container visible after loading
+  const showAIResponseContainer = () => {
+    const containers = document.querySelectorAll('.ai-response-container');
+    containers.forEach(container => {
+      setTimeout(() => {
+        container.classList.add('visible');
+      }, 100);
+    });
+  };
+
+  // Make summary sections visible when they appear
+  const showSummarySection = () => {
+    const sections = document.querySelectorAll('.summary-section');
+    sections.forEach(section => {
+      setTimeout(() => {
+        section.classList.add('visible');
+      }, 300);
+    });
+  };
+
+  // Apply animation to medical cards
+  const setupMedicalCards = () => {
+    const cards = document.querySelectorAll('.medical-card');
+    cards.forEach((card, index) => {
+      card.style.setProperty('--card-index', index);
+    });
+  };
+
+  // Apply animation to medical data items
+  const setupMedicalDataItems = () => {
+    const items = document.querySelectorAll('.medical-data-item');
+    items.forEach((item, index) => {
+      item.style.setProperty('--item-index', index);
+    });
+  };
+
+  // Mutation observer to watch for new elements
+  const observeDOM = () => {
+    const observer = new MutationObserver(mutations => {
+      mutations.forEach(mutation => {
+        if (mutation.addedNodes.length) {
+          // Check for AI container
+          if (document.querySelector('.ai-response-container')) {
+            showAIResponseContainer();
+          }
+          
+          // Check for summary section
+          if (document.querySelector('.summary-section')) {
+            showSummarySection();
+          }
+          
+          // Setup medical cards and data items if present
+          setupMedicalCards();
+          setupMedicalDataItems();
+        }
+      });
+    });
+    
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true
+    });
+  };
+
+  // Smooth scroll to element
+  window.smoothScrollTo = (selector) => {
+    const element = document.querySelector(selector);
+    if (element) {
+      element.scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'start'
+      });
+      
+      // Add a highlight effect
+      element.classList.add('focus-highlight');
+      setTimeout(() => {
+        element.classList.remove('focus-highlight');
+      }, 2000);
+    }
+  };
+
+  // Apply the "New" badge to Ask AI buttons for first-time users
+  const showNewAIFeatureBadge = () => {
+    // Check if user has seen the feature before
+    if (!localStorage.getItem('seenAIFeature')) {
+      document.body.classList.add('feature-new-ai');
+      
+      // After 5 days, remove the badge
+      setTimeout(() => {
+        localStorage.setItem('seenAIFeature', 'true');
+        document.body.classList.remove('feature-new-ai');
+      }, 5 * 24 * 60 * 60 * 1000);
+    }
+  };
+
+  // Initialize everything
+  showAIResponseContainer();
+  showSummarySection();
+  setupMedicalCards();
+  setupMedicalDataItems();
+  observeDOM();
+  showNewAIFeatureBadge();
 });
 
 function initializeProfessionalAnimations() {

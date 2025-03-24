@@ -194,7 +194,7 @@ export class AppComponent implements OnInit, OnDestroy {
     }
   }
 
-  // Update navigation method to properly clear previous content
+  // Updated navigation method to properly collapse sidebar when changing tabs
   navigateTo(section: string): void {
     if (this.activeSection !== section) {
       // Reset all content immediately
@@ -217,10 +217,12 @@ export class AppComponent implements OnInit, OnDestroy {
         this.clearSections = false;
       }, 300);
       
-      // Close sidebar on mobile
-      if (this.isMobile) {
-        this.closeSidebar();
-      }
+      // Always close sidebar regardless of device
+      this.sidebarActive = false;
+      this.sidebarCollapsed = true;
+      
+      // Log sidebar state for debugging
+      console.log('Sidebar closed during navigation: collapsed =', this.sidebarCollapsed, 'active =', this.sidebarActive);
     }
   }
 
@@ -425,6 +427,14 @@ export class AppComponent implements OnInit, OnDestroy {
       return;
     }
 
+    // Scroll to summary section once it appears
+    setTimeout(() => {
+      const summarySection = document.querySelector('.summary-section');
+      if (summarySection) {
+        summarySection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 100);
+
     this.wsService
       .generateSummary(currentTranscription)
       .then((data) => {
@@ -475,15 +485,49 @@ export class AppComponent implements OnInit, OnDestroy {
       });
   }
 
-  // Toggle Ask AI form visibility
+  // Toggle Ask AI form visibility with improved scrolling
   toggleAskAI(): void {
     this.showAskAIForm = !this.showAskAIForm;
-    // Reset the query and response when toggling
+    
+    // Reset the query and response when closing
     if (!this.showAskAIForm) {
       this.query = '';
       this.llamaResponse = '';
+    } else {
+      // When opening, add a slight delay to ensure the element is rendered before scrolling
+      setTimeout(() => {
+        this.scrollToElement('.ai-response-container');
+      }, 100);
     }
+    
     console.log('Ask AI form toggled:', this.showAskAIForm ? 'visible' : 'hidden');
+  }
+  
+  // Improved method to scroll to any element
+  scrollToElement(selector: string): void {
+    try {
+      const element = document.querySelector(selector);
+      if (element) {
+        // Use a more reliable scrolling method
+        element.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start'
+        });
+        
+        // Also add a focus outline temporarily to draw attention
+        const focusableElement = element.querySelector('input, textarea, button') || element;
+        if (focusableElement instanceof HTMLElement) {
+          focusableElement.focus();
+          // Add highlight class temporarily
+          focusableElement.classList.add('focus-highlight');
+          setTimeout(() => {
+            focusableElement.classList.remove('focus-highlight');
+          }, 2000); // Remove after 2 seconds
+        }
+      }
+    } catch (error) {
+      console.error('Error scrolling to element:', error);
+    }
   }
 
   // Updated method to ask Llama API using WebSocketService
@@ -521,6 +565,14 @@ export class AppComponent implements OnInit, OnDestroy {
       this.showToast('error', 'Empty Question', 'Please enter a question to ask.', 3000);
       return;
     }
+
+    // Scroll to AI response container
+    setTimeout(() => {
+      const responseContainer = document.querySelector('.ai-response-container');
+      if (responseContainer) {
+        responseContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 100);
 
     this.wsService
       .askAI(currentTranscription, this.query)

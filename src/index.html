@@ -117,6 +117,41 @@
       pointer-events: none;
     }
   </style>
+  <!-- Add custom helpers in head section -->
+  <script>
+    // Make sure animations script is loaded
+    document.addEventListener('DOMContentLoaded', function() {
+      // Apply visible class to AI containers when shown
+      setInterval(() => {
+        document.querySelectorAll('.ai-response-container').forEach(container => {
+          if (container.style.display !== 'none') {
+            container.classList.add('visible');
+          }
+        });
+        
+        // Apply visible class to summary sections
+        document.querySelectorAll('.summary-section').forEach(section => {
+          if (section.style.display !== 'none') {
+            section.classList.add('visible');
+          }
+        });
+        
+        // Add fade-in class to content sections for smooth transitions
+        document.querySelectorAll('.content-section').forEach(section => {
+          if (!section.classList.contains('fade-in') && 
+              section.style.display !== 'none' && 
+              section.offsetParent !== null) {
+            section.classList.add('fade-in');
+          }
+        });
+      }, 300);
+      
+      // Add body class for new AI feature badge
+      if (!localStorage.getItem('seenAIFeature')) {
+        document.body.classList.add('feature-new-ai');
+      }
+    });
+  </script>
 </head>
 <body class="mat-typography">
   <!-- Professional preloader -->
