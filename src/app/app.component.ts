@@ -739,7 +739,34 @@ export class AppComponent implements OnInit, OnDestroy {
         if (this.audioContext.audioWorklet) {
           // Modern approach (replace with AudioWorkletNode implementation)
           // For now, fallback to ScriptProcessorNode
-          this.useScriptProcessorNode();
+          // First, dynamically load the audio worklet processor
+          await this.audioContext.audioWorklet.addModule('assets/recorderWorkletProcessor.js');
+
+          // Create the AudioWorkletNode instance
+          this.scriptNode = new AudioWorkletNode(this.audioContext, 'recorder-processor');
+
+          // Clear any previously recorded chunks when starting a new recording
+          this.recordedChunks = [];
+
+          // Set up message handler to receive processed audio data from the worklet
+          this.scriptNode.port.onmessage = (event: MessageEvent<{eventType: string; audioBuffer: ArrayBuffer}>) => {
+            if (event.data.eventType === 'audio') {
+              const pcmData = new Int16Array(event.data.audioBuffer);
+              
+              // Store a copy of the recorded chunk for local playback
+              this.recordedChunks.push(new Int16Array(pcmData));
+              
+              // Send to WebSocket for transcription
+              this.wsService.sendAudioData(pcmData.buffer);
+            }
+          };
+
+          // Connect the audio nodes
+          this.source!.connect(this.scriptNode);
+          // Connect to destination to keep the audio processing active
+          this.scriptNode.connect(this.audioContext!.destination);
+
+         
         } else {
           // Fallback for browsers that don't support AudioWorkletNode
           this.useScriptProcessorNode();

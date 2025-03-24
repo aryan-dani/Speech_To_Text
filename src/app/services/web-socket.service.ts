@@ -1,103 +1,294 @@
 import { Injectable, NgZone } from '@angular/core';
 import { Observable, Subject } from 'rxjs';
+import { environment } from '../../environments/environment';
+import { LoggingService } from './logging.service';
 
-// Base URL for backend services (ensure this matches your backend)
-const BACKEND_HOST = '192.168.3.21';
-const BACKEND_PORT = 8000;
-const BACKEND_WS_BASE = `ws://${BACKEND_HOST}:${BACKEND_PORT}`;
-const BACKEND_HTTP_BASE = `http://${BACKEND_HOST}:${BACKEND_PORT}`;
+// Configuration constants from environment
+const BACKEND_CONFIG = environment.backend;
+
+// URL constants with protocol determined by configuration
+const WS_PROTOCOL = BACKEND_CONFIG.useSecureWebSockets ? 'wss' : 'ws';
+const HTTP_PROTOCOL = BACKEND_CONFIG.useSecureWebSockets ? 'https' : 'http';
+
+const BACKEND_WS_BASE = `${WS_PROTOCOL}://${BACKEND_CONFIG.host}:${BACKEND_CONFIG.port}`;
+const BACKEND_HTTP_BASE = `${HTTP_PROTOCOL}://${BACKEND_CONFIG.host}:${BACKEND_CONFIG.port}`;
+
+// Type definitions for better type safety
+interface SummaryRequest {
+  transcription: string;
+}
+
+interface AIRequest {
+  query: string;
+  transcription: string;
+}
+
+interface WebSocketConnection {
+  socket: WebSocket | null;
+  url: string;
+  reconnectAttempts: number;
+  subject?: Subject<any>;
+  connectionTimeout?: number;
+}
+
+type ConnectionType = 'transcribe' | 'summary';
+
+// WebSocket error code descriptions for better error messages
+const WS_ERROR_CODES: Record<number, string> = {
+  1000: 'Normal closure',
+  1001: 'Going away',
+  1002: 'Protocol error',
+  1003: 'Unsupported data',
+  1004: 'Reserved',
+  1005: 'No status received',
+  1006: 'Abnormal closure',
+  1007: 'Invalid frame payload data',
+  1008: 'Policy violation',
+  1009: 'Message too big',
+  1010: 'Mandatory extension',
+  1011: 'Internal server error',
+  1012: 'Service restart',
+  1013: 'Try again later',
+  1014: 'Bad gateway',
+  1015: 'TLS handshake'
+};
 
 @Injectable({
   providedIn: 'root',
 })
 export class WebSocketService {
-  private transcribeWsUrl = `${BACKEND_WS_BASE}/transcribe/`;
-  private summaryWsUrl = `${BACKEND_WS_BASE}/generate_summary/`;
-  private aiWsUrl = `${BACKEND_WS_BASE}/talk_with_ai/`;
+  // WebSocket endpoints
+  private readonly endpoints = {
+    transcribe: `${BACKEND_WS_BASE}/transcribe/`,
+    summary: `${BACKEND_WS_BASE}/generate_summary/`,
+    ai: `${BACKEND_WS_BASE}/talk_with_ai/`
+  };
 
-  private transcribeSocket: WebSocket | null = null;
-  private summarySocket: WebSocket | null = null;
+  // Subject for communication streams
+  public transcriptionSubject: Subject<string> = new Subject<string>();
+  public summarySubject: Subject<any> = new Subject<any>();
+  
+  // Socket connection state
+  private connections: Record<ConnectionType, WebSocketConnection> = {
+    transcribe: {
+      socket: null,
+      url: this.endpoints.transcribe,
+      reconnectAttempts: 0,
+      subject: this.transcriptionSubject
+    },
+    summary: {
+      socket: null,
+      url: this.endpoints.summary,
+      reconnectAttempts: 0,
+      subject: this.summarySubject
+    }
+  };
 
-  public transcriptionSubject: Subject<string> = new Subject();
-  public summarySubject: Subject<any> = new Subject();
-
-  private transcribeReconnectAttempts = 0;
-  private summaryReconnectAttempts = 0;
-  private maxReconnectDelay = 30000; 
-
-  constructor(private zone: NgZone) {
-    this.connectTranscriptionWebSocket();
-    this.connectSummaryWebSocket();
+  constructor(
+    private zone: NgZone,
+    private logger: LoggingService
+  ) {
+    this.initializeConnections();
   }
 
-  // Transcription WebSocket Connection
-  private connectTranscriptionWebSocket(): void {
+  // Initialize all WebSocket connections
+  private initializeConnections(): void {
+    this.connectWebSocket('transcribe');
+    this.connectWebSocket('summary');
+  }
+
+  // Generic method to connect any WebSocket with enhanced error handling
+  private connectWebSocket(type: ConnectionType): void {
+    const connection = this.connections[type];
+    
     if (
-      !this.transcribeSocket ||
-      this.transcribeSocket.readyState === WebSocket.CLOSED ||
-      this.transcribeSocket.readyState === WebSocket.CLOSING
+      !connection.socket ||
+      connection.socket.readyState === WebSocket.CLOSED ||
+      connection.socket.readyState === WebSocket.CLOSING
     ) {
-      console.log(
-        'Attempting to connect to transcription WebSocket:',
-        this.transcribeWsUrl
-      );
-      this.transcribeSocket = new WebSocket(this.transcribeWsUrl);
+      this.logger.info(`Attempting to connect to ${type} WebSocket`, connection.url);
+      
+      // Clear any existing timeout
+      if (connection.connectionTimeout) {
+        clearTimeout(connection.connectionTimeout);
+      }
+      
+      try {
+        connection.socket = new WebSocket(connection.url);
+        
+        // Set connection timeout
+        connection.connectionTimeout = window.setTimeout(() => {
+          if (connection.socket?.readyState !== WebSocket.OPEN) {
+            this.logger.error(`${type} WebSocket connection timeout after ${BACKEND_CONFIG.connectionTimeout}ms`);
+            connection.socket?.close();
+            this.handleConnectionFailure(type, 'Connection timeout');
+          }
+        }, BACKEND_CONFIG.connectionTimeout);
 
-      this.transcribeSocket.onopen = () => {
-        console.log('Transcription WebSocket connected');
-        this.transcribeReconnectAttempts = 0;
-        this.transcriptionSubject.next('WebSocket connected');
-      };
+        connection.socket.onopen = () => {
+          // Clear the timeout on successful connection
+          if (connection.connectionTimeout) {
+            clearTimeout(connection.connectionTimeout);
+          }
+          
+          this.logger.info(`${type.charAt(0).toUpperCase() + type.slice(1)} WebSocket connected`);
+          connection.reconnectAttempts = 0;
+          
+          if (connection.subject) {
+            connection.subject.next(type === 'transcribe' ? 'WebSocket connected' : { status: 'connected' });
+          }
+        };
 
-      this.transcribeSocket.onmessage = (event) => {
-        this.zone.run(() => {
-          console.log('Transcription received:', event.data);
-          // Backend sends plain text, no JSON parsing needed
-          this.transcriptionSubject.next(event.data);
-        });
-      };
+        connection.socket.onmessage = (event) => {
+          this.zone.run(() => {
+            this.logger.debug(`${type} received:`, event.data);
+            
+            if (connection.subject) {
+              if (type === 'transcribe') {
+                // Backend sends plain text for transcription
+                connection.subject.next(event.data);
+              } else {
+                // For summary, parse JSON
+                try {
+                  const data = JSON.parse(event.data);
+                  connection.subject.next(data);
+                } catch (error) {
+                  this.logger.error(`Error parsing ${type} data:`, error);
+                  const errorMessage = this.getReadableErrorMessage('parsing_error', error);
+                  connection.subject.error(errorMessage);
+                }
+              }
+            }
+          });
+        };
 
-      this.transcribeSocket.onerror = (error) => {
-        console.error('Transcription WebSocket error:', error);
-        // Log the error object to inspect its structure
-        console.log('Transcription WebSocket error object:', error);
-        // Dispatch a new Event instance with the error message
-        const errorMessage =
-          error instanceof Error ? error.message : 'Unknown error';
-        this.transcriptionSubject.next(`WebSocket error: ${errorMessage}`);
-      };
+        connection.socket.onerror = (error) => {
+          this.logger.error(`${type} WebSocket error:`, error);
+          
+          if (connection.connectionTimeout) {
+            clearTimeout(connection.connectionTimeout);
+          }
+          
+          const errorMessage = this.getReadableErrorMessage('socket_error', error);
+          
+          if (connection.subject) {
+            if (type === 'transcribe') {
+              connection.subject.next(`WebSocket error: ${errorMessage}`);
+            } else {
+              connection.subject.error(`WebSocket error: ${errorMessage}`);
+            }
+          }
+        };
 
-      this.transcribeSocket.onclose = (event) => {
-        console.warn('Transcription WebSocket closed:', event);
-        // Log the close event to inspect its structure
-        console.log('Transcription WebSocket close event:', event);
-        this.reconnectTranscription();
-      };
+        connection.socket.onclose = (event) => {
+          if (connection.connectionTimeout) {
+            clearTimeout(connection.connectionTimeout);
+          }
+          
+          const closeReason = this.getWebSocketCloseReason(event);
+          this.logger.warn(`${type} WebSocket closed: ${closeReason}`);
+          
+          if (event.wasClean) {
+            this.logger.info(`${type} WebSocket closed cleanly with code ${event.code}`);
+          } else {
+            this.logger.warn(`${type} WebSocket connection died unexpectedly`);
+            this.handleConnectionFailure(type, closeReason);
+          }
+        };
+      } catch (error) {
+        this.logger.error(`Error creating ${type} WebSocket:`, error);
+        this.handleConnectionFailure(type, this.logger.formatError(error));
+      }
     }
   }
 
-  private reconnectTranscription(): void {
-    const delay = Math.min(
-      3000 * (this.transcribeReconnectAttempts + 1),
-      this.maxReconnectDelay
-    );
-    this.transcribeReconnectAttempts++;
-    console.log(
-      `Reconnecting transcription in ${delay}ms (attempt ${this.transcribeReconnectAttempts})`
-    );
-    // Log before attempting to reconnect
-    console.log('Attempting to reconnect to transcription WebSocket');
-    setTimeout(() => this.connectTranscriptionWebSocket(), delay);
+  // Get a readable message for WebSocket close events
+  private getWebSocketCloseReason(event: CloseEvent): string {
+    const code = event.code;
+    const reason = event.reason || WS_ERROR_CODES[code] || 'Unknown reason';
+    return `Code: ${code}, Reason: ${reason}`;
   }
 
-  // Send audio data (expects 16kHz, 16-bit PCM)
-  sendAudioData(audioData: ArrayBuffer | Blob): void {
+  // Get human-readable error messages from various error types
+  private getReadableErrorMessage(type: string, error: any): string {
+    let baseMessage = '';
+    
+    switch (type) {
+      case 'socket_error':
+        baseMessage = 'Connection error';
+        break;
+      case 'parsing_error':
+        baseMessage = 'Error processing data from server';
+        break;
+      case 'send_error':
+        baseMessage = 'Error sending data to server';
+        break;
+      case 'connection_failure':
+        baseMessage = 'Failed to connect to server';
+        break;
+      default:
+        baseMessage = 'Unknown error';
+    }
+    
+    const details = this.logger.formatError(error);
+    return `${baseMessage}${details ? `: ${details}` : ''}`;
+  }
+
+  // Handle connection failures with max retry logic
+  private handleConnectionFailure(type: ConnectionType, errorMessage: string): void {
+    const connection = this.connections[type];
+    connection.reconnectAttempts++;
+    
+    // Check if we've reached maximum reconnection attempts
+    if (connection.reconnectAttempts > BACKEND_CONFIG.maxReconnectAttempts) {
+      this.logger.error(
+        `${type} WebSocket maximum reconnection attempts (${BACKEND_CONFIG.maxReconnectAttempts}) reached. Giving up.`
+      );
+      
+      if (connection.subject) {
+        const message = `Unable to connect to the server after ${BACKEND_CONFIG.maxReconnectAttempts} attempts. Please check your network connection or contact support.`;
+        connection.subject.error(message);
+      }
+      return;
+    }
+    
+    this.scheduleReconnect(type);
+  }
+
+  // Handle reconnection with exponential backoff
+  private scheduleReconnect(type: ConnectionType): void {
+    const connection = this.connections[type];
+    const delay = Math.min(
+      BACKEND_CONFIG.reconnectBaseDelay * Math.pow(1.5, connection.reconnectAttempts - 1),
+      BACKEND_CONFIG.maxReconnectDelay
+    );
+    
+    this.logger.info(
+      `Reconnecting ${type} in ${delay}ms (attempt ${connection.reconnectAttempts}/${BACKEND_CONFIG.maxReconnectAttempts})`
+    );
+    
+    setTimeout(() => this.connectWebSocket(type), delay);
+  }
+
+  // Send audio data for transcription with enhanced error handling
+  public sendAudioData(audioData: ArrayBuffer | Blob): void {
+    const connection = this.connections['transcribe'];
+    
     if (
-      !this.transcribeSocket ||
-      this.transcribeSocket.readyState !== WebSocket.OPEN
+      !connection.socket ||
+      connection.socket.readyState !== WebSocket.OPEN
     ) {
-      console.warn('Transcription WebSocket not open, attempting to connect');
-      this.connectTranscriptionWebSocket();
+      this.logger.warn('Transcription WebSocket not open, attempting to connect');
+      this.connectWebSocket('transcribe');
+      
+      // If we're at the max attempts, don't try to send again
+      if (connection.reconnectAttempts >= BACKEND_CONFIG.maxReconnectAttempts) {
+        this.transcriptionSubject.next(
+          'Cannot send audio: Unable to connect to the server. Please check your network connection or contact support.'
+        );
+        return;
+      }
+      
       setTimeout(() => this.sendAudioData(audioData), 500);
       return;
     }
@@ -108,112 +299,61 @@ export class WebSocketService {
         reader.onload = () => {
           const arrayBuffer = reader.result as ArrayBuffer;
           const audioBytes = new Uint8Array(arrayBuffer);
-          this.transcribeSocket!.send(audioBytes);
-          console.log('Audio data (Blob) sent');
+          connection.socket!.send(audioBytes);
+          this.logger.debug('Audio data (Blob) sent');
         };
-        reader.onerror = () => {
-          console.error('Error reading Blob');
-          this.transcriptionSubject.next('Error reading audio data');
+        reader.onerror = (error) => {
+          this.logger.error('Error reading Blob:', error);
+          this.transcriptionSubject.next(
+            `Error preparing audio data: ${this.logger.formatError(error)}`
+          );
         };
         reader.readAsArrayBuffer(audioData);
       } else {
         const audioBytes = new Uint8Array(audioData);
-        this.transcribeSocket.send(audioBytes);
-        console.log('Audio data (ArrayBuffer) sent');
+        connection.socket.send(audioBytes);
+        this.logger.debug('Audio data (ArrayBuffer) sent');
       }
     } catch (error) {
-      console.error('Error sending audio:', error);
+      this.logger.error('Error sending audio:', error);
       this.transcriptionSubject.next(
-        'Error sending audio: ' +
-          (error instanceof Error ? error.message : 'Unknown')
+        `Error sending audio: ${this.logger.formatError(error)}`
       );
     }
   }
 
-  // Get transcription stream
-  getTranscriptionStream(): Observable<string> {
+  // Get transcription stream as observable
+  public getTranscriptionStream(): Observable<string> {
     if (
-      !this.transcribeSocket ||
-      this.transcribeSocket.readyState !== WebSocket.OPEN
+      !this.connections['transcribe'].socket ||
+      this.connections['transcribe'].socket.readyState !== WebSocket.OPEN
     ) {
-      console.log('Transcription WebSocket not connected, initializing');
-      this.connectTranscriptionWebSocket();
+      this.logger.info('Transcription WebSocket not connected, initializing');
+      this.connectWebSocket('transcribe');
     }
     return this.transcriptionSubject.asObservable();
   }
 
-  // Summary WebSocket Connection
-  private connectSummaryWebSocket(): void {
-    if (
-      !this.summarySocket ||
-      this.summarySocket.readyState === WebSocket.CLOSED ||
-      this.summarySocket.readyState === WebSocket.CLOSING
-    ) {
-      console.log(
-        'Attempting to connect to summary WebSocket:',
-        this.summaryWsUrl
-      );
-      this.summarySocket = new WebSocket(this.summaryWsUrl);
-
-      this.summarySocket.onopen = () => {
-        console.log('Summary WebSocket connected');
-        this.summaryReconnectAttempts = 0;
-      };
-
-      this.summarySocket.onmessage = (event) => {
-        this.zone.run(() => {
-          try {
-            console.log('Summary received:', event.data);
-            const data = JSON.parse(event.data); // Backend sends JSON
-            this.summarySubject.next(data);
-          } catch (error) {
-            console.error('Error parsing summary:', error);
-            this.summarySubject.error(error);
-          }
-        });
-      };
-
-      this.summarySocket.onerror = (error) => {
-        console.error('Summary WebSocket error:', error);
-        // Log the error object to inspect its structure
-        console.log('Summary WebSocket error object:', error);
-        // Dispatch a new Event instance with the error message
-        const errorMessage =
-          error instanceof Error ? error.message : 'Unknown error';
-        this.summarySubject.error(`WebSocket error: ${errorMessage}`);
-      };
-
-      this.summarySocket.onclose = (event) => {
-        console.warn('Summary WebSocket closed:', event);
-        // Log the close event to inspect its structure
-        console.log('Summary WebSocket close event:', event);
-        this.reconnectSummary();
-      };
-    }
-  }
-
-  private reconnectSummary(): void {
-    const delay = Math.min(
-      3000 * (this.summaryReconnectAttempts + 1),
-      this.maxReconnectDelay
-    );
-    this.summaryReconnectAttempts++;
-    console.log(
-      `Reconnecting summary in ${delay}ms (attempt ${this.summaryReconnectAttempts})`
-    );
-    // Log before attempting to reconnect
-    console.log('Attempting to reconnect to summary WebSocket');
-    setTimeout(() => this.connectSummaryWebSocket(), delay);
-  }
-
-  // Generate summary
-  generateSummary(transcription: string): Promise<any> {
+  // Generate summary with improved promise handling and error messages
+  public generateSummary(transcription: string): Promise<any> {
+    const connection = this.connections['summary'];
+    
     return new Promise((resolve, reject) => {
       if (
-        !this.summarySocket ||
-        this.summarySocket.readyState !== WebSocket.OPEN
+        !connection.socket ||
+        connection.socket.readyState !== WebSocket.OPEN
       ) {
-        this.connectSummaryWebSocket();
+        this.logger.info('Summary WebSocket not connected, initializing');
+        this.connectWebSocket('summary');
+        
+        // If we're at the max attempts, don't try to send again
+        if (connection.reconnectAttempts >= BACKEND_CONFIG.maxReconnectAttempts) {
+          reject(new Error(
+            'Cannot generate summary: Unable to connect to the server. Please check your network connection or contact support.'
+          ));
+          return;
+        }
+        
         setTimeout(
           () => this.generateSummary(transcription).then(resolve).catch(reject),
           500
@@ -224,87 +364,169 @@ export class WebSocketService {
       const messageHandler = (event: MessageEvent) => {
         try {
           const data = JSON.parse(event.data);
-          console.log('Summary response:', data);
+          this.logger.info('Summary response received');
+          this.logger.debug('Summary data:', data);
           resolve(data);
-          this.summarySocket!.removeEventListener('message', messageHandler);
+          connection.socket!.removeEventListener('message', messageHandler);
         } catch (error) {
-          console.error('Error processing summary:', error);
-          reject(error);
-          this.summarySocket!.removeEventListener('message', messageHandler);
+          this.logger.error('Error processing summary:', error);
+          const errorMessage = `Error processing summary: ${this.logger.formatError(error)}`;
+          reject(new Error(errorMessage));
+          connection.socket!.removeEventListener('message', messageHandler);
         }
       };
 
-      this.summarySocket.addEventListener('message', messageHandler);
-      this.summarySocket.onerror = (error) =>
-        reject(new Error('Summary WebSocket error'));
-      this.summarySocket.onclose = () =>
-        reject(new Error('Summary WebSocket closed'));
+      connection.socket.addEventListener('message', messageHandler);
+      
+      const errorHandler = (error: Event) => {
+        const errorMessage = `Summary request failed: ${this.logger.formatError(error)}`;
+        this.logger.error(errorMessage);
+        reject(new Error(errorMessage));
+        connection.socket!.removeEventListener('error', errorHandler);
+      };
+      
+      const closeHandler = (event: CloseEvent) => {
+        const closeReason = this.getWebSocketCloseReason(event);
+        const errorMessage = `Summary connection closed: ${closeReason}`;
+        this.logger.warn(errorMessage);
+        reject(new Error(errorMessage));
+        connection.socket!.removeEventListener('close', closeHandler);
+      };
+      
+      connection.socket.addEventListener('error', errorHandler);
+      connection.socket.addEventListener('close', closeHandler);
 
       try {
-        // Format the message according to the new requirements
-        const message = JSON.stringify({ transcription: transcription });
-        this.summarySocket.send(message);
-        console.log('Sent transcription for summary:', message);
+        // Check if transcription is empty
+        if (!transcription || transcription.trim() === '') {
+          const errorMessage = 'Cannot generate summary: Empty transcription provided';
+          this.logger.warn(errorMessage);
+          reject(new Error(errorMessage));
+          return;
+        }
+        
+        // Format the message according to the backend requirements
+        const request: SummaryRequest = { transcription };
+        const message = JSON.stringify(request);
+        connection.socket.send(message);
+        this.logger.info('Sent transcription for summary generation');
+        this.logger.debug('Summary request payload:', request);
       } catch (error) {
-        console.error('Error sending transcription:', error);
-        reject(error);
+        const errorMessage = `Error sending transcription: ${this.logger.formatError(error)}`;
+        this.logger.error(errorMessage);
+        reject(new Error(errorMessage));
       }
     });
   }
 
-  // AI Interaction (simplified, assuming rxjs/webSocket isn’t strictly needed)
-  askAI(transcription: string, query: string): Promise<string> {
+  // AI Interaction with proper error handling and better user messages
+  public askAI(transcription: string, query: string): Promise<string> {
     return new Promise((resolve, reject) => {
-      const socket = new WebSocket(this.aiWsUrl);
+      // Validate inputs
+      if (!query || query.trim() === '') {
+        const errorMessage = 'Cannot process AI request: Empty query provided';
+        this.logger.warn(errorMessage);
+        reject(new Error(errorMessage));
+        return;
+      }
 
-      socket.onopen = () => {
-        // Format the message according to the new requirements
-        const payload = JSON.stringify({
-          query: query,
-          transcription: transcription,
-        });
-        socket.send(payload);
-        console.log('Sent AI request:', payload);
-      };
+      if (!transcription || transcription.trim() === '') {
+        const errorMessage = 'Cannot process AI request: Empty transcription provided';
+        this.logger.warn(errorMessage);
+        reject(new Error(errorMessage));
+        return;
+      }
 
-      socket.onmessage = (event) => {
-        console.log('AI response:', event.data);
-        resolve(event.data); // Backend sends text
-        socket.close();
-      };
+      let connectionTimeout: number | undefined;
+      
+      try {
+        this.logger.info('Creating AI WebSocket connection');
+        const socket = new WebSocket(this.endpoints.ai);
 
-      socket.onerror = (error) => {
-        console.error('AI WebSocket error:', error);
-        // Log the error object to inspect its structure
-        console.log('AI WebSocket error object:', error);
-        const errorMessage =
-          error instanceof Error ? error.message : 'Unknown error';
-        reject(new Error(`AI WebSocket error: ${errorMessage}`));
-      };
+        // Set connection timeout
+        connectionTimeout = window.setTimeout(() => {
+          if (socket.readyState !== WebSocket.OPEN) {
+            this.logger.error(`AI WebSocket connection timeout after ${BACKEND_CONFIG.connectionTimeout}ms`);
+            socket.close();
+            reject(new Error('AI request failed: Connection timeout. Please try again later.'));
+          }
+        }, BACKEND_CONFIG.connectionTimeout);
 
-      socket.onclose = (event) => {
-        if (event.code !== 1000) {
-          // Normal closure
-          console.warn('AI WebSocket closed unexpectedly:', event);
-          reject(new Error('AI WebSocket closed'));
+        socket.onopen = () => {
+          // Clear the timeout on successful connection
+          if (connectionTimeout) {
+            clearTimeout(connectionTimeout);
+          }
+          
+          this.logger.info('AI WebSocket connected');
+          
+          // Format the message according to backend requirements
+          const payload: AIRequest = {
+            query,
+            transcription
+          };
+          
+          socket.send(JSON.stringify(payload));
+          this.logger.info('Sent AI request');
+          this.logger.debug('AI request payload:', payload);
+        };
+
+        socket.onmessage = (event) => {
+          this.logger.info('AI response received');
+          this.logger.debug('AI response:', event.data);
+          resolve(event.data); // Backend sends text
+          socket.close();
+        };
+
+        socket.onerror = (error) => {
+          if (connectionTimeout) {
+            clearTimeout(connectionTimeout);
+          }
+          
+          const errorMessage = `AI request failed: ${this.logger.formatError(error)}`;
+          this.logger.error(errorMessage, error);
+          reject(new Error(errorMessage));
+        };
+
+        socket.onclose = (event) => {
+          if (connectionTimeout) {
+            clearTimeout(connectionTimeout);
+          }
+          
+          if (event.code !== 1000) { // Normal closure
+            const closeReason = this.getWebSocketCloseReason(event);
+            const errorMessage = `AI connection closed: ${closeReason}`;
+            this.logger.warn(errorMessage);
+            reject(new Error(errorMessage));
+          }
+        };
+      } catch (error) {
+        if (connectionTimeout) {
+          clearTimeout(connectionTimeout);
         }
-      };
+        
+        const errorMessage = `Error setting up AI connection: ${this.logger.formatError(error)}`;
+        this.logger.error(errorMessage, error);
+        reject(new Error(errorMessage));
+      }
     });
   }
 
-  // Close connections
-  close(): void {
-    if (this.transcribeSocket?.readyState === WebSocket.OPEN) {
-      this.transcribeSocket.close();
-      this.transcribeSocket = null;
-    }
-    if (this.summarySocket?.readyState === WebSocket.OPEN) {
-      this.summarySocket.close();
-      this.summarySocket = null;
-    }
+  // Clean up all connections
+  public close(): void {
+    this.logger.info('Closing all WebSocket connections');
+    
+    Object.entries(this.connections).forEach(([type, connection]) => {
+      if (connection.socket?.readyState === WebSocket.OPEN) {
+        this.logger.debug(`Closing ${type} WebSocket connection`);
+        connection.socket.close();
+        connection.socket = null;
+      }
+    });
   }
 
-  getHttpBaseUrl(): string {
+  // Get HTTP base URL for other services
+  public getHttpBaseUrl(): string {
     return BACKEND_HTTP_BASE;
   }
 }

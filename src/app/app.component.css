@@ -1645,11 +1645,11 @@ a:focus, button:focus, input:focus, textarea:focus, select:focus, .collapsible-h
 /* ===== NEW COMPONENT: TOAST NOTIFICATIONS ===== */
 .toast-container {
   position: fixed;
-  bottom: 20px;
+  top: 20px;
   right: 20px;
   z-index: 10000;
   display: flex;
-  flex-direction: column-reverse; /* Stack from bottom up */
+  flex-direction: column; /* Stack from top down */
   gap: 10px;
   max-width: 350px;
   width: auto;
@@ -1667,7 +1667,7 @@ a:focus, button:focus, input:focus, textarea:focus, select:focus, .collapsible-h
   align-items: flex-start;
   overflow: hidden;
   position: relative;
-  transform: translateX(100%); /* Start off screen */
+  transform: translateY(-100%); /* Start off screen from top */
   opacity: 0;
   animation: toast-slide-in 0.4s forwards cubic-bezier(0.21, 1.02, 0.73, 1);
   border-left: 4px solid var(--primary-color);
@@ -1804,11 +1804,11 @@ a:focus, button:focus, input:focus, textarea:focus, select:focus, .collapsible-h
 
 @keyframes toast-slide-in {
   from { 
-    transform: translateX(100%);
+    transform: translateY(-100%);
     opacity: 0; 
   }
   to { 
-    transform: translateX(0);
+    transform: translateY(0);
     opacity: 1; 
   }
 }
@@ -1820,11 +1820,11 @@ a:focus, button:focus, input:focus, textarea:focus, select:focus, .collapsible-h
 
 @keyframes toast-slide-out {
   from { 
-    transform: translateX(0); 
+    transform: translateY(0); 
     opacity: 1;
   }
   to { 
-    transform: translateX(100%);
+    transform: translateY(-100%);
     opacity: 0;
   }
 }
@@ -1832,7 +1832,7 @@ a:focus, button:focus, input:focus, textarea:focus, select:focus, .collapsible-h
 /* Improved responsive behavior for toast notifications */
 @media (max-width: 576px) {
   .toast-container {
-    bottom: 10px;
+    top: 10px;
     right: 10px;
     left: 10px;
     max-width: none;
@@ -2331,13 +2331,13 @@ button:active::after {
 }
 
 @keyframes toast-slide-in {
-  from { transform: translateX(100%); opacity: 0; }
-  to { transform: translateX(0); opacity: 1; }
+  from { transform: translateY(-100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
 }
 
 @keyframes toast-fade-out {
-  from { transform: translateX(0); opacity: 1; }
-  to { transform: translateX(100%); opacity: 0; }
+  from { transform: translateY(0); opacity: 1; }
+  to { transform: translateY(-100%); opacity: 0; }
 }
 
 /* Enhanced sidebar animation */
