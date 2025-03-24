@@ -2,7 +2,7 @@ export const environment = {
   production: false,
   backend: {
     host: '192.168.3.21', // Change this according to your environment
-    port: 8000,
+    // port: 8000,
     maxReconnectDelay: 30000,
     reconnectBaseDelay: 3000,
     maxReconnectAttempts: 100, // Maximum number of reconnection attempts

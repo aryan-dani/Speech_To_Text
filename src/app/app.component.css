@@ -2,13 +2,15 @@
 
 /* ===== ENHANCED COLOR SCHEME AND VARIABLES ===== */
 :root {
-  --primary-color: #4361ee;
+  --primary-color: #2196f3;
   --primary-light: #738ffe;
   --primary-dark: #2b3ff7;
-  --secondary-color: #48bfe3;
-  --accent-color: #fc8c74;
-  --danger-color: #ef476f;
-  --text-color: #212529;
+  --secondary-color: #1976d2;
+  --accent-color: #ff4081;
+  --success-color: #4caf50;
+  --warning-color: #ff9800;
+  --error-color: #f44336;
+  --text-color: #333;
   --text-secondary: #495057;
   --card-bg: #ffffff;
   --background-light: #f8f9fa;
@@ -17,7 +19,7 @@
   --sidebar-text: #ffffff;
   --sidebar-hover: rgba(255, 255, 255, 0.15);
   --card-shadow: 0 6px 16px rgba(33, 37, 41, 0.06);
-  --transition-speed: 0.25s;
+  --transition-speed: 0.3s;
   --sidebar-width: 260px;
   --sidebar-collapsed-width: 60px;
   --border-radius: 12px;
@@ -546,6 +548,11 @@ body {
   border: 1px solid rgba(33, 37, 41, 0.05);
   position: relative;
   overflow: hidden;
+}
+
+.card:hover, .card:focus {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
 /* Center card better */
@@ -2222,37 +2229,47 @@ a:focus, button:focus, input:focus, textarea:focus, select:focus, .collapsible-h
 
 /* ===== RESPONSIVE SIDEBAR FOR MOBILE ===== */
 .mobile-menu-toggle {
-  display: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 45px;
+  height: 45px;
+  position: fixed;
+  top: 1rem;
+  left: 1rem;
+  background: linear-gradient(135deg, #2B3A67 0%, #1E2A4A 100%);
+  color: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+  z-index: 1001;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
+.mobile-menu-toggle:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+}
+
+.mobile-menu-toggle:active {
+  transform: scale(0.95);
+}
+
+.mobile-menu-toggle i {
+  font-size: 24px;
+}
+
+/* Remove conflicting rules elsewhere in the file */
 @media (max-width: 768px) {
-  .mobile-menu-toggle {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 40px;
-    height: 40px;
-    position: fixed;
-    top: 20px;
-    left: 20px;
-    background-color: var(--primary-color);
-    color: white;
-    border-radius: 50%;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-    z-index: 1001;
-    cursor: pointer;
-    transition: all 0.3s ease;
+  .sidebar {
+    transform: translateX(-100%);
   }
-  
-  .mobile-menu-toggle:hover {
-    background-color: var(--primary-dark);
+
+  .sidebar.active {
+    transform: translateX(0);
   }
-  
-  .mobile-menu-toggle i,
-  .mobile-menu-toggle svg {
-    font-size: 20px;
-  }
-  
+
   .main-content {
     margin-left: 0;
     padding-top: 80px;
@@ -2951,4 +2968,85 @@ input:checked + .toggle-slider:before {
   0% { transform: scale(1); }
   50% { transform: scale(0.97); }
   100% { transform: scale(1); }
+}
+
+/* ===== KEYBOARD NAVIGATION ENHANCEMENTS ===== */
+.keyboard-user :focus {
+  outline: 3px solid var(--primary-color) !important;
+  outline-offset: 2px !important;
+  box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.25) !important;
+}
+
+.keyboard-user .sidebar-nav li:focus {
+  background: rgba(255, 255, 255, 0.15);
+  outline: 2px solid rgba(255, 255, 255, 0.6) !important;
+  outline-offset: -2px;
+}
+
+.keyboard-user .action-button:focus {
+  outline: 3px solid rgba(67, 97, 238, 0.5) !important;
+  outline-offset: 2px;
+  transform: translateY(-2px);
+}
+
+.keyboard-user .ask-ai-button:focus {
+  outline: 3px solid rgba(76, 110, 245, 0.5) !important;
+  outline-offset: 2px;
+  box-shadow: 0 8px 20px rgba(76, 110, 245, 0.35);
+}
+
+/* Enhanced focus styles for input fields */
+.keyboard-user .form-input:focus,
+.keyboard-user textarea:focus {
+  outline: 2px solid var(--primary-color) !important;
+  outline-offset: 0;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.25);
+}
+
+/* Keyboard navigation indicator for sidebar items */
+.keyboard-user .sidebar-nav li:focus-visible {
+  position: relative;
+  overflow: visible;
+}
+
+.keyboard-user .sidebar-nav li:focus-visible::before {
+  content: '⌨';
+  position: absolute;
+  right: -25px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.8);
+  animation: keyboard-indicator 1s ease infinite;
+}
+
+@keyframes keyboard-indicator {
+  0%, 100% { opacity: 0.5; transform: translateY(-50%) scale(1); }
+  50% { opacity: 1; transform: translateY(-50%) scale(1.1); }
+}
+
+/* Navigation Arrows Indicator */
+.keyboard-user .sidebar-nav li.active::after {
+  content: '↔';
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.7);
+  animation: arrow-hint 2s ease infinite;
+}
+
+@keyframes arrow-hint {
+  0%, 100% { transform: translateY(-50%) translateX(0); }
+  50% { transform: translateY(-50%) translateX(5px); }
+}
+
+/* Enhanced focus styles for sample items */
+.keyboard-user .sample-item:focus {
+  outline: none;
+  transform: translateY(-5px);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1),
+              0 0 0 3px rgba(67, 97, 238, 0.25);
 }

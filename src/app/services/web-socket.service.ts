@@ -10,8 +10,8 @@ const BACKEND_CONFIG = environment.backend;
 const WS_PROTOCOL = BACKEND_CONFIG.useSecureWebSockets ? 'wss' : 'ws';
 const HTTP_PROTOCOL = BACKEND_CONFIG.useSecureWebSockets ? 'https' : 'http';
 
-const BACKEND_WS_BASE = `${WS_PROTOCOL}://${BACKEND_CONFIG.host}:${BACKEND_CONFIG.port}`;
-const BACKEND_HTTP_BASE = `${HTTP_PROTOCOL}://${BACKEND_CONFIG.host}:${BACKEND_CONFIG.port}`;
+const BACKEND_WS_BASE = `${WS_PROTOCOL}://${BACKEND_CONFIG.host}`;
+const BACKEND_HTTP_BASE = `${HTTP_PROTOCOL}://${BACKEND_CONFIG.host}`;
 
 // Type definitions for better type safety
 interface SummaryRequest {

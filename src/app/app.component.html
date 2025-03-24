@@ -17,15 +17,15 @@
     </div>
     <nav class="sidebar-nav">
       <ul>
-        <li [class.active]="activeSection === 'live'" (click)="navigateTo('live')">
+        <li [class.active]="activeSection === 'live'" (click)="navigateTo('live')" tabindex="0" (keydown.enter)="navigateTo('live')">
           <i class="material-icons nav-icon">mic</i>
           <span class="nav-text">Live Recording</span>
         </li>
-        <li [class.active]="activeSection === 'file'" (click)="navigateTo('file')">
+        <li [class.active]="activeSection === 'file'" (click)="navigateTo('file')" tabindex="0" (keydown.enter)="navigateTo('file')">
           <i class="material-icons nav-icon">file_upload</i>
           <span class="nav-text">Upload Audio</span>
         </li>
-        <li [class.active]="activeSection === 'samples'" (click)="navigateTo('samples')">
+        <li [class.active]="activeSection === 'samples'" (click)="navigateTo('samples')" tabindex="0" (keydown.enter)="navigateTo('samples')">
           <i class="material-icons nav-icon">view_list</i>
           <span class="nav-text">Sample Transcriptions</span>
         </li>
@@ -105,11 +105,12 @@
                    id="ai-query" 
                    class="form-input" 
                    [(ngModel)]="query" 
-                   placeholder="Ask a question about the transcription...">
+                   placeholder="Ask a question about the transcription..."
+                   (keydown.enter)="askLlama()">
             <p class="form-help">Example: "What are the main symptoms mentioned?" or "Summarize the patient's condition"</p>
           </div>
           
-          <button class="submit-button" (click)="askLlama()" [disabled]="!query || !transcription">
+          <button class="submit-button" (click)="askLlama()" [disabled]="!query">
             <i class="material-icons">send</i> Submit Question
           </button>
           
@@ -216,12 +217,13 @@
                    id="ai-query-file" 
                    class="form-input" 
                    [(ngModel)]="query" 
-                   placeholder="Ask a question about the transcription...">
+                   placeholder="Ask a question about the transcription..."
+                   (keydown.enter)="askLlama()">
           </div>
           
           <button class="submit-button" 
                   (click)="askLlama()" 
-                  [disabled]="!query || !uploadedTranscription">
+                  [disabled]="!query">
             <i class="material-icons">send</i> Submit Question
           </button>
           
@@ -242,7 +244,9 @@
         <div class="samples-list">
           <div class="sample-item" 
                *ngFor="let sample of sampleTranscriptions; let i = index" 
-               (click)="loadSample(i)">
+               (click)="loadSample(i)"
+               tabindex="0"
+               (keydown.enter)="loadSample(i)">
             <h3>Sample {{ i + 1 }}</h3>
             <p>{{ sample.preview }}</p>
             <div class="sample-meta">
@@ -294,12 +298,13 @@
                    id="ai-query-sample" 
                    class="form-input" 
                    [(ngModel)]="query" 
-                   placeholder="Ask a question about the transcription...">
+                   placeholder="Ask a question about the transcription..."
+                   (keydown.enter)="askLlama()">
           </div>
           
           <button class="submit-button" 
                   (click)="askLlama()" 
-                  [disabled]="!query || selectedSample === null">
+                  [disabled]="!query">
             <i class="material-icons">send</i> Submit Question
           </button>
           

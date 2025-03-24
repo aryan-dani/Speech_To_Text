@@ -10,6 +10,8 @@ import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http'; // Removed deprecated HttpClientModule
 import { WebSocketService } from './services/web-socket.service';
+import { LoadingService } from './services/loading.service';
+import { HelpService } from './services/help.service';
 
 @Component({
   selector: 'app-root',
@@ -111,10 +113,24 @@ export class AppComponent implements OnInit, OnDestroy {
   private visualizationAnimationFrame: number | null = null;
   private readonly BAR_COUNT = 15; // Number of visualization bars
 
+  // New UX-related properties
+  private readonly RETRY_ATTEMPTS = 3;
+  private retryCount = 0;
+  isFirstVisit = true;
+  lastAction: string = '';
+  helpSteps: any[] = [];
+  visualFeedback = {
+    recordingPulse: false,
+    uploadSuccess: false,
+    aiThinking: false
+  };
+
   constructor(
     private wsService: WebSocketService,
     private http: HttpClient,
-    private zone: NgZone
+    private zone: NgZone,
+    private loadingService: LoadingService,
+    private helpService: HelpService
   ) {
     if (typeof document !== 'undefined') {
       this.checkScreenSize();
@@ -146,6 +162,23 @@ export class AppComponent implements OnInit, OnDestroy {
     
     // Initialize keyboard navigation
     this.initKeyboardNavigation();
+    
+    // Enable keyboard navigation hints for first-time users
+    setTimeout(() => {
+      const askAIButton = document.querySelector('.ask-ai-button');
+      if (askAIButton) {
+        askAIButton.setAttribute('title', 'Press Alt + A to toggle Ask AI');
+      }
+    }, 1000);
+
+    // Show initial tutorial for first-time users
+    this.helpSteps = this.helpService.showInitialTutorial() || [];
+    if (this.helpSteps.length > 0) {
+      this.showTutorial();
+    }
+
+    // Enable smooth transitions for UI changes
+    document.body.classList.add('transitions-enabled');
   }
 
   ngOnDestroy(): void {
@@ -197,7 +230,9 @@ export class AppComponent implements OnInit, OnDestroy {
   // Updated navigation method to properly collapse sidebar when changing tabs
   navigateTo(section: string): void {
     if (this.activeSection !== section) {
-      // Reset all content immediately
+      document.body.classList.add('section-transition');
+      
+      // Reset all content with fade effect
       this.clearSections = true;
       this.summary = '';
       this.medicalHistory = null;
@@ -211,18 +246,21 @@ export class AppComponent implements OnInit, OnDestroy {
       this.selectedSample = null;
       this.liveAudioUrl = '';
       
-      // Change section after a short delay for transition
+      // Change section after transition
       setTimeout(() => {
         this.activeSection = section;
         this.clearSections = false;
+        document.body.classList.remove('section-transition');
+        
+        // Show contextual help for new sections
+        this.helpService.showContextualHelp(`section-${section}`);
       }, 300);
       
-      // Always close sidebar regardless of device
-      this.sidebarActive = false;
-      this.sidebarCollapsed = true;
-      
-      // Log sidebar state for debugging
-      console.log('Sidebar closed during navigation: collapsed =', this.sidebarCollapsed, 'active =', this.sidebarActive);
+      // Mobile optimizations
+      if (this.isMobile) {
+        this.sidebarActive = false;
+        this.sidebarCollapsed = true;
+      }
     }
   }
 
@@ -537,6 +575,18 @@ export class AppComponent implements OnInit, OnDestroy {
       return;
     }
 
+    if (!this.query?.trim()) {
+      this.showToast('error', 'Empty Question', 'Please enter a question to ask.', 3000);
+      return;
+    }
+
+    this.loadingService.show();
+    this.visualFeedback.aiThinking = true;
+    this.llamaResponse = 'AI is thinking...';
+    
+    // Store last query for retry purposes
+    this.lastAction = this.query;
+
     // Show loading state
     this.llamaResponse = 'Processing request...';
     this.processingTranscription = true;
@@ -636,81 +686,94 @@ export class AppComponent implements OnInit, OnDestroy {
     }
   }
 
-  // File upload handling
+  // Enhanced file upload with progress and retry
   uploadAudio(): void {
     if (!this.selectedFile) {
-      console.error('No file selected');
-      this.uploadedTranscription = 'Error: No file selected';
       this.showToast('error', 'Upload Error', 'No file selected for upload.', 3000);
       return;
     }
 
-    // Show loading state
-    this.uploadedTranscription = 'Uploading and transcribing...';
+    this.loadingService.show();
     this.isUploading = true;
     this.uploadProgress = 0;
     this.showToast('info', 'Upload Started', 'Uploading and transcribing your audio...', 3000);
 
-    // Simulate progress updates (actual progress would be server-dependent)
-    const progressInterval = setInterval(() => {
-      if (this.uploadProgress < 90) {
-        this.uploadProgress += 10;
+    const upload = () => {
+      const formData = new FormData();
+      formData.append('file', this.selectedFile!);
+
+      const uploadUrl = `${this.wsService.getHttpBaseUrl()}/upload/`;
+      
+      // Create upload observer with progress tracking
+      const xhr = new XMLHttpRequest();
+      xhr.upload.onprogress = (event) => {
+        if (event.lengthComputable) {
+          this.zone.run(() => {
+            this.uploadProgress = Math.round((event.loaded / event.total) * 100);
+          });
+        }
+      };
+
+      xhr.onload = () => {
+        this.zone.run(() => {
+          if (xhr.status === 200) {
+            const response = JSON.parse(xhr.response);
+            this.handleUploadSuccess(response);
+          } else {
+            this.handleUploadError(xhr.statusText);
+          }
+        });
+      };
+
+      xhr.onerror = () => {
+        this.zone.run(() => {
+          this.handleUploadError('Network error occurred');
+        });
+      };
+
+      xhr.open('POST', uploadUrl, true);
+      xhr.send(formData);
+    };
+
+    upload();
+  }
+
+  private handleUploadSuccess(response: any): void {
+    this.loadingService.hide();
+    this.isUploading = false;
+    this.uploadProgress = 100;
+    this.visualFeedback.uploadSuccess = true;
+    
+    setTimeout(() => {
+      this.visualFeedback.uploadSuccess = false;
+      
+      if (response && response.transcription) {
+        this.uploadedTranscription = response.transcription;
+        
+        if (this.uploadedTranscription.trim() === '') {
+          this.uploadedTranscription = 'No speech detected in the audio file.';
+          this.showToast('warning', 'No Speech Detected', 'No speech could be detected in the audio file.', 5000);
+        } else {
+          this.showToast('success', 'Transcription Complete', 'Your audio has been transcribed successfully.', 3000);
+          this.transcription = this.uploadedTranscription;
+        }
       }
     }, 500);
+  }
 
-    const formData = new FormData();
-    formData.append('file', this.selectedFile);
+  private handleUploadError(error: string): void {
+    if (this.retryCount < this.RETRY_ATTEMPTS) {
+      this.retryCount++;
+      this.showToast('warning', 'Upload Failed', `Retrying upload (${this.retryCount}/${this.RETRY_ATTEMPTS})...`, 3000);
+      setTimeout(() => this.uploadAudio(), 1000);
+      return;
+    }
 
-    const uploadUrl = `${this.wsService.getHttpBaseUrl()}/upload/`;
-    this.http.post<any>(uploadUrl, formData).subscribe({
-      next: (response) => {
-        clearInterval(progressInterval);
-        this.uploadProgress = 100;
-        
-        setTimeout(() => {
-          this.isUploading = false;
-          
-          if (response && response.transcription) {
-            this.uploadedTranscription = response.transcription;
-
-            // If the transcription is empty, provide feedback
-            if (this.uploadedTranscription.trim() === '') {
-              this.uploadedTranscription =
-                'No speech detected in the audio file.';
-              this.showToast('warning', 'No Speech Detected', 'No speech could be detected in the audio file.', 5000);
-            } else {
-              this.showToast('success', 'Transcription Complete', 'Your audio has been transcribed successfully.', 3000);
-            }
-
-            // Optionally copy to main transcription area for further processing
-            if (
-              this.uploadedTranscription &&
-              this.uploadedTranscription !==
-                'No speech detected in the audio file.'
-            ) {
-              this.transcription = this.uploadedTranscription;
-            }
-
-            console.log('Upload response:', response);
-          } else {
-            this.uploadedTranscription = 'Error: Invalid response from server';
-            console.error('Invalid upload response:', response);
-            this.showToast('error', 'Server Error', 'Received invalid response from server.', 5000);
-          }
-        }, 500);
-      },
-      error: (error) => {
-        clearInterval(progressInterval);
-        this.isUploading = false;
-        console.error('Upload error:', error);
-        this.uploadedTranscription = `Error: ${
-          error.status === 0
-            ? 'Could not connect to server'
-            : error.message || 'Failed to upload audio file'
-        }`;
-        this.showToast('error', 'Upload Failed', 'Could not upload the audio file.', 5000);
-      },
-    });
+    this.loadingService.hide();
+    this.isUploading = false;
+    this.uploadedTranscription = `Error: Upload failed after ${this.RETRY_ATTEMPTS} attempts`;
+    this.showToast('error', 'Upload Failed', 'Could not upload the audio file after multiple attempts.', 5000);
+    this.retryCount = 0;
   }
 
   // Method for live audio recording with real-time transcription
@@ -721,7 +784,9 @@ export class AppComponent implements OnInit, OnDestroy {
     }
 
     if (!this.isRecording) {
-      // Starting recording
+      this.loadingService.show();
+      this.visualFeedback.recordingPulse = true;
+      
       this.transcription = 'Preparing to record...';
       this.showToast('info', 'Recording Setup', 'Preparing to record...', 3000);
 
@@ -828,15 +893,30 @@ export class AppComponent implements OnInit, OnDestroy {
         this.transcription = 'Recording... Speak now';
         this.showToast('success', 'Recording Started', 'Speak clearly into your microphone.', 3000);
         console.log('Recording started with real-time transcription and visualization');
+        
+        // Show contextual help for first recording
+        this.helpService.showContextualHelp('first-recording');
+        
       } catch (err) {
         console.error('Error accessing microphone', err);
+        
+        if (this.retryCount < this.RETRY_ATTEMPTS) {
+          this.retryCount++;
+          this.showToast('warning', 'Retrying', `Attempting to access microphone (${this.retryCount}/${this.RETRY_ATTEMPTS})...`, 3000);
+          setTimeout(() => this.toggleRecording(), 1000);
+          return;
+        }
+        
         this.transcription = `Microphone access error: ${
           err instanceof Error ? err.message : 'Could not access microphone'
         }`;
-        this.showToast('error', 'Microphone Error', 'Could not access your microphone.', 5000);
+        this.showToast('error', 'Microphone Error', 'Could not access your microphone. Please check your permissions.', 5000);
+      } finally {
+        this.loadingService.hide();
       }
     } else {
       // Stopping recording
+      this.visualFeedback.recordingPulse = false;
       this.stopRecording();
       this.showToast('info', 'Recording Stopped', 'Processing your audio...', 3000);
     }
@@ -1028,15 +1108,14 @@ export class AppComponent implements OnInit, OnDestroy {
 
   // Handle keyboard navigation for sidebar
   initKeyboardNavigation() {
-    console.log('Initializing keyboard navigation...');
+    console.log('Initializing enhanced keyboard navigation...');
     
-    // Improved Escape key handling for better responsiveness
     if (typeof window !== 'undefined') {
       window.addEventListener('keydown', (event: KeyboardEvent) => {
         console.log('Key pressed:', event.key);
         
+        // ESC key to toggle sidebar
         if (event.key === 'Escape') {
-          // Toggle sidebar with Escape key
           this.toggleSidebar();
           console.log('Escape pressed, toggling sidebar');
           event.preventDefault();
@@ -1056,6 +1135,30 @@ export class AppComponent implements OnInit, OnDestroy {
           this.toggleRecording();
           event.preventDefault();
         }
+        
+        // Navigation between menu items with Shift+Arrow
+        if (event.shiftKey) {
+          const sections = ['live', 'file', 'samples'];
+          const currentIndex = sections.indexOf(this.activeSection);
+          
+          if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
+            // Navigate to next section
+            if (currentIndex < sections.length - 1) {
+              const nextSection = sections[currentIndex + 1];
+              this.navigateTo(nextSection);
+              console.log(`Shift+${event.key} pressed, navigating to: ${nextSection}`);
+              event.preventDefault();
+            }
+          } else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
+            // Navigate to previous section
+            if (currentIndex > 0) {
+              const prevSection = sections[currentIndex - 1];
+              this.navigateTo(prevSection);
+              console.log(`Shift+${event.key} pressed, navigating to: ${prevSection}`);
+              event.preventDefault();
+            }
+          }
+        }
       }, true); // Added true for capture phase to ensure our handler runs first
     }
     
@@ -1071,7 +1174,7 @@ export class AppComponent implements OnInit, OnDestroy {
       document.body.classList.remove('keyboard-user');
     });
     
-    console.log('Keyboard navigation initialized');
+    console.log('Enhanced keyboard navigation initialized');
   }
 
   // Make Ask AI button work independently
@@ -1141,5 +1244,79 @@ export class AppComponent implements OnInit, OnDestroy {
   ngAfterViewInit() {
     // Call this to ensure keyboard accessibility is set up after view is ready
     this.ensureCardKeyboardAccessibility();
+  }
+
+  // Add these methods to handle keyboard events in the Ask AI form
+  handleAskAIKeydown(event: KeyboardEvent): void {
+    // If the user presses Enter and not holding Shift
+    if (event.key === 'Enter' && !event.shiftKey) {
+      event.preventDefault(); // Prevent form submission
+      this.askLlama(); // Submit the question
+    }
+  }
+
+  // Add this to initialize keyboard event listeners
+  initKeyboardListeners(): void {
+    document.addEventListener('keydown', (event: KeyboardEvent) => {
+      // Handle Shift + Arrow keys for navigation
+      if (event.shiftKey) {
+        const sections = ['live', 'file', 'samples'];
+        const currentIndex = sections.indexOf(this.activeSection);
+        
+        switch (event.key) {
+          case 'ArrowRight':
+          case 'ArrowDown':
+            if (currentIndex < sections.length - 1) {
+              event.preventDefault();
+              this.navigateTo(sections[currentIndex + 1]);
+            }
+            break;
+          
+          case 'ArrowLeft':
+          case 'ArrowUp':
+            if (currentIndex > 0) {
+              event.preventDefault();
+              this.navigateTo(sections[currentIndex - 1]);
+            }
+            break;
+        }
+      }
+
+      // Add Escape key to close Ask AI form
+      if (event.key === 'Escape' && this.showAskAIForm) {
+        event.preventDefault();
+        this.toggleAskAI();
+      }
+
+      // Add keyboard shortcut Alt + A to toggle Ask AI
+      if (event.altKey && event.key.toLowerCase() === 'a') {
+        event.preventDefault();
+        this.toggleAskAI();
+      }
+    });
+  }
+
+  private showTutorial(): void {
+    let currentStep = 0;
+    
+    const showNextStep = () => {
+      if (currentStep < this.helpSteps.length) {
+        const step = this.helpSteps[currentStep];
+        const element = document.querySelector(step.target);
+        if (element) {
+          element.classList.add('highlight-tutorial');
+          this.showToast('info', 'Tip', step.content, 5000);
+        }
+        currentStep++;
+        setTimeout(showNextStep, 5000);
+      } else {
+        // Remove highlights
+        document.querySelectorAll('.highlight-tutorial').forEach(el => {
+          el.classList.remove('highlight-tutorial');
+        });
+      }
+    };
+    
+    showNextStep();
   }
 }
