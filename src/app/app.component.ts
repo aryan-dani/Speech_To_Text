@@ -256,20 +256,18 @@ export class AppComponent implements OnInit, OnDestroy {
         this.helpService.showContextualHelp(`section-${section}`);
       }, 300);
       
-      // Always close sidebar on mobile
-      if (this.isMobile) {
-        this.sidebarActive = false;
-        this.sidebarCollapsed = true;
-        
-        // Add a small delay to ensure the sidebar closing animation is smooth
-        setTimeout(() => {
-          const overlay = document.querySelector('.sidebar-overlay') as HTMLElement;
-          if (overlay) {
-            overlay.style.opacity = '0';
-            overlay.style.visibility = 'hidden';
-          }
-        }, 50);
-      }
+      // Always close sidebar when clicking an item
+      this.sidebarActive = false;
+      this.sidebarCollapsed = true;
+      
+      // Add a small delay to ensure the sidebar closing animation is smooth
+      setTimeout(() => {
+        const overlay = document.querySelector('.sidebar-overlay') as HTMLElement;
+        if (overlay) {
+          overlay.style.opacity = '0';
+          overlay.style.visibility = 'hidden';
+        }
+      }, 50);
     }
   }
 
