@@ -256,10 +256,19 @@ export class AppComponent implements OnInit, OnDestroy {
         this.helpService.showContextualHelp(`section-${section}`);
       }, 300);
       
-      // Mobile optimizations
+      // Always close sidebar on mobile
       if (this.isMobile) {
         this.sidebarActive = false;
         this.sidebarCollapsed = true;
+        
+        // Add a small delay to ensure the sidebar closing animation is smooth
+        setTimeout(() => {
+          const overlay = document.querySelector('.sidebar-overlay') as HTMLElement;
+          if (overlay) {
+            overlay.style.opacity = '0';
+            overlay.style.visibility = 'hidden';
+          }
+        }, 50);
       }
     }
   }
@@ -534,13 +543,29 @@ export class AppComponent implements OnInit, OnDestroy {
     } else {
       // When opening, add a slight delay to ensure the element is rendered before scrolling
       setTimeout(() => {
-        this.scrollToElement('.ai-response-container');
+        const aiResponseContainer = document.querySelector('.ai-response-container');
+        if (aiResponseContainer) {
+          // Add visible class to ensure it's displayed
+          aiResponseContainer.classList.add('visible');
+          this.scrollToElement('.ai-response-container');
+        }
       }, 100);
     }
     
+    // Make sure any AI response container gets the visible class
+    setTimeout(() => {
+      document.querySelectorAll('.ai-response-container').forEach(container => {
+        if (this.showAskAIForm) {
+          container.classList.add('visible');
+        } else {
+          container.classList.remove('visible');
+        }
+      });
+    }, 50);
+    
     console.log('Ask AI form toggled:', this.showAskAIForm ? 'visible' : 'hidden');
   }
-  
+
   // Improved method to scroll to any element
   scrollToElement(selector: string): void {
     try {

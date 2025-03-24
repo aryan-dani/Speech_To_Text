@@ -193,6 +193,9 @@ a:hover {
   transition: transform var(--transition-speed) ease;
   z-index: 1000;
   transform: translateX(-100%); /* Start with sidebar hidden by default */
+  left: 0;
+  top: 0;
+  box-shadow: 4px 0 25px rgba(0, 0, 0, 0.15);
 }
 
 .sidebar.active {
@@ -210,20 +213,29 @@ a:hover {
 /* Responsive Layout */
 @media (min-width: 769px) {
   /* Desktop styles */
-  .main-content.sidebar-active {
+  .sidebar {
+    transform: translateX(0); /* Default visible on desktop */
+  }
+  
+  .sidebar-collapsed .sidebar {
+    transform: translateX(-100%); /* Hide when collapsed */
+  }
+  
+  .main-content {
     margin-left: var(--sidebar-width);
     width: calc(100% - var(--sidebar-width));
   }
   
-  /* Ensure content is centered when sidebar is not active */
-  .main-content:not(.sidebar-active) {
+  .sidebar-collapsed .main-content {
+    margin-left: 0;
+    width: 100%;
+  }
+  
+  /* Ensure content is centered when sidebar is collapsed */
+  .sidebar-collapsed .main-content {
     margin-left: auto;
     margin-right: auto;
     max-width: 1200px; /* Set a max-width for centered content */
-  }
-  
-  .sidebar.active {
-    transform: translateX(0);
   }
 }
 
