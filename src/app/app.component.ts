@@ -449,8 +449,12 @@ export class AppComponent implements OnInit, OnDestroy {
 
     // Show loading state
     this.summary = 'Generating summary...';
-    this.medicalHistory = null;
     this.processingTranscription = true;
+    
+    // Important: Don't clear the medical history when regenerating summary
+    // This ensures hospitalization/surgical history buttons remain visible
+    // this.medicalHistory = null; // Removing this line
+    
     this.showToast('info', 'Processing', 'Generating medical summary...', 5000);
 
     // Get the appropriate transcription based on the active section

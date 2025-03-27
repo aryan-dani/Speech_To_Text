@@ -2116,22 +2116,24 @@ a:focus, button:focus, input:focus, textarea:focus, select:focus, .collapsible-h
   position: fixed;
   top: 0;
   left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(255, 255, 255, 0.8);
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  z-index: 1000;
   opacity: 0;
   visibility: hidden;
+  z-index: 9;
   transition: opacity 0.3s ease, visibility 0.3s ease;
+  pointer-events: none;
 }
 
 .loading-overlay.active {
   opacity: 1;
   visibility: visible;
+  pointer-events: auto;
 }
 
 .loading-spinner {
@@ -2468,7 +2470,7 @@ input:checked + .toggle-slider:before {
 
 /* Enhanced Status Indicators */
 .status-indicator-container {
-  transition: transform 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease;
+  transition: transform 0.3s ease, box-shadow 0.3s ease, background-color 0.3sease;
   position: relative;
   overflow: hidden;
 }
@@ -2480,7 +2482,7 @@ input:checked + .toggle-slider:before {
   left: 0;
   width: 100%;
   height: 100%;
-  background: linear-gradient(120deg, rgba(255,255,255,0) 30%, rgba(255,255,255,.5) 38%, rgba(255,255,255,0) 48%);
+  background: linear-gradient(120deg, rgba(255,255,255,0) 30%, rgba(255,255,255,.2) 38%, rgba(255,255,255,0) 48%);
   background-size: 200% 100%;
   animation: none;
   opacity: 0;
@@ -2523,7 +2525,6 @@ input:checked + .toggle-slider:before {
   left: -50%;
   transform: scale(0);
   transition: transform 0.5s ease-out;
-  border-radius: 50%;
 }
 
 .record-button:hover::before {
@@ -2846,215 +2847,4 @@ input:checked + .toggle-slider:before {
 .sidebar-nav li:hover .nav-icon {
   transform: scale(1.1);
   color: var(--secondary-color);
-}
-
-/* ===== IMPROVED BUTTON STYLING ===== */
-button {
-  /* Keep existing styles */
-  position: relative;
-  transition: all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
-}
-
-button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
-}
-
-button:active {
-  transform: translateY(1px);
-  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
-  transition: all 0.1s ease;
-}
-
-/* Improved focus state for accessibility */
-button:focus-visible {
-  outline: 3px solid rgba(67, 97, 238, 0.5);
-  outline-offset: 2px;
-}
-
-/* Enhanced Ask AI button with more prominent styling */
-.ask-ai-button {
-  /* Keep existing styles */
-  position: relative;
-  border-radius: 12px;
-  overflow: hidden;
-}
-
-.ask-ai-button::before {
-  content: '';
-  position: absolute;
-  top: -2px;
-  left: -2px;
-  right: -2px;
-  bottom: -2px;
-  background: linear-gradient(45deg, 
-    rgba(72, 191, 227, 0) 0%, 
-    rgba(72, 191, 227, 0.8) 50%, 
-    rgba(72, 191, 227, 0) 100%);
-  background-size: 200% 200%;
-  animation: shimmer 2s linear infinite;
-  border-radius: 14px;
-  z-index: -1;
-  opacity: 0;
-  transition: opacity 0.25s ease;
-}
-
-.ask-ai-button:hover::before {
-  opacity: 1;
-}
-
-.enhanced-ai-button {
-  /* Additional styles for the enhanced Ask AI button */
-  box-shadow: 0 5px 15px rgba(72, 191, 227, 0.3);
-}
-
-.enhanced-ai-button:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 8px 20px rgba(72, 191, 227, 0.4);
-}
-
-@keyframes shimmer {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
-}
-
-/* Improved Record Button */
-.record-button {
-  /* Keep existing styles */
-  position: relative;
-  overflow: hidden;
-}
-
-/* Add subtle pulse effect even in non-recording state */
-.record-button::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%);
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
-.record-button:hover::after {
-  opacity: 1;
-}
-
-/* Enhanced toggle switches */
-.toggle-switch {
-  /* Keep existing styles */
-  cursor: pointer;
-}
-
-.toggle-slider {
-  /* Keep existing styles */
-  transition: background-color 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
-}
-
-.toggle-slider:focus-within {
-  box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.3);
-}
-
-.toggle-slider:before {
-  /* Keep existing styles */
-  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.25s ease;
-}
-
-input:checked + .toggle-slider:before {
-  transform: translateX(24px);
-  background-color: #ffffff;
-}
-
-/* Subtle user feedback when item is clicked */
-.feedback-click {
-  animation: feedback-pulse 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
-}
-
-@keyframes feedback-pulse {
-  0% { transform: scale(1); }
-  50% { transform: scale(0.97); }
-  100% { transform: scale(1); }
-}
-
-/* ===== KEYBOARD NAVIGATION ENHANCEMENTS ===== */
-.keyboard-user :focus {
-  outline: 3px solid var(--primary-color) !important;
-  outline-offset: 2px !important;
-  box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.25) !important;
-}
-
-.keyboard-user .sidebar-nav li:focus {
-  background: rgba(255, 255, 255, 0.15);
-  outline: 2px solid rgba(255, 255, 255, 0.6) !important;
-  outline-offset: -2px;
-}
-
-.keyboard-user .action-button:focus {
-  outline: 3px solid rgba(67, 97, 238, 0.5) !important;
-  outline-offset: 2px;
-  transform: translateY(-2px);
-}
-
-.keyboard-user .ask-ai-button:focus {
-  outline: 3px solid rgba(76, 110, 245, 0.5) !important;
-  outline-offset: 2px;
-  box-shadow: 0 8px 20px rgba(76, 110, 245, 0.35);
-}
-
-/* Enhanced focus styles for input fields */
-.keyboard-user .form-input:focus,
-.keyboard-user textarea:focus {
-  outline: 2px solid var(--primary-color) !important;
-  outline-offset: 0;
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.25);
-}
-
-/* Keyboard navigation indicator for sidebar items */
-.keyboard-user .sidebar-nav li:focus-visible {
-  position: relative;
-  overflow: visible;
-}
-
-.keyboard-user .sidebar-nav li:focus-visible::before {
-  content: '⌨';
-  position: absolute;
-  right: -25px;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 12px;
-  color: rgba(255, 255, 255, 0.8);
-  animation: keyboard-indicator 1s ease infinite;
-}
-
-@keyframes keyboard-indicator {
-  0%, 100% { opacity: 0.5; transform: translateY(-50%) scale(1); }
-  50% { opacity: 1; transform: translateY(-50%) scale(1.1); }
-}
-
-/* Navigation Arrows Indicator */
-.keyboard-user .sidebar-nav li.active::after {
-  content: '↔';
-  position: absolute;
-  right: 10px;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 14px;
-  color: rgba(255, 255, 255, 0.7);
-  animation: arrow-hint 2s ease infinite;
-}
-
-@keyframes arrow-hint {
-  0%, 100% { transform: translateY(-50%) translateX(0); }
-  50% { transform: translateY(-50%) translateX(5px); }
-}
-
-/* Enhanced focus styles for sample items */
-.keyboard-user .sample-item:focus {
-  outline: none;
-  transform: translateY(-5px);
-  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1),
-              0 0 0 3px rgba(67, 97, 238, 0.25);
 }
