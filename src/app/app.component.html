@@ -86,8 +86,7 @@
         <div class="transcription-area">
           <textarea [(ngModel)]="transcription" 
                     rows="6" 
-                    placeholder="Your transcription will appear here..." 
-                    [readonly]="isRecording"></textarea>
+                    placeholder="Your transcription will appear here..."></textarea>
         </div>
 
         <!-- Ask AI Form with Enhanced Styling -->
@@ -198,8 +197,7 @@
         <div class="transcription-area">
           <textarea [(ngModel)]="uploadedTranscription" 
                     rows="6" 
-                    placeholder="Transcription will appear here..." 
-                    readonly></textarea>
+                    placeholder="Transcription will appear here..."></textarea>
         </div>
 
         <!-- AI Response Container -->
@@ -266,8 +264,7 @@
         <div class="transcription-area" *ngIf="selectedSample !== null">
           <textarea [(ngModel)]="transcription" 
                     rows="6" 
-                    placeholder="Select a sample to view" 
-                    readonly></textarea>
+                    placeholder="Select a sample to view"></textarea>
         </div>
 
         <!-- Sample Control Buttons -->
@@ -323,8 +320,7 @@
           <textarea [(ngModel)]="summary" 
                     rows="6" 
                     placeholder="Summary output" 
-                    title="Summary output" 
-                    readonly></textarea>
+                    title="Summary output"></textarea>
         </div>
       </div>
     </div>
@@ -353,23 +349,17 @@
           <div class="medical-data-grid">
             <div class="medical-data-item">
               <div class="data-label">Complaint</div>
-              <div class="data-value" [class.empty]="!medicalHistory.chief_complaints.Complaint">
-                {{ medicalHistory.chief_complaints.Complaint || 'None specified' }}
-              </div>
+              <input class="form-input" type="text" [(ngModel)]="medicalHistory.chief_complaints.Complaint" placeholder="None specified">
             </div>
             
             <div class="medical-data-item">
               <div class="data-label">Duration</div>
-              <div class="data-value" [class.empty]="!medicalHistory.chief_complaints.Duration">
-                {{ medicalHistory.chief_complaints.Duration || 'None specified' }}
-              </div>
+              <input class="form-input" type="text" [(ngModel)]="medicalHistory.chief_complaints.Duration" placeholder="None specified">
             </div>
             
             <div class="medical-data-item" style="grid-column: 1 / -1;">
               <div class="data-label">Description</div>
-              <div class="data-value" [class.empty]="!medicalHistory.chief_complaints.Description">
-                {{ medicalHistory.chief_complaints.Description || 'None specified' }}
-              </div>
+              <textarea class="form-input" [(ngModel)]="medicalHistory.chief_complaints.Description" placeholder="None specified" rows="3"></textarea>
             </div>
           </div>
         </div>

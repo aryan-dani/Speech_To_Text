@@ -455,7 +455,8 @@ export class AppComponent implements OnInit, OnDestroy {
     // This ensures hospitalization/surgical history buttons remain visible
     // this.medicalHistory = null; // Removing this line
     
-    this.showToast('info', 'Processing', 'Generating medical summary...', 5000);
+    // Show a more attractive toast for generating summary
+    this.showToast('primary', 'Generating Summary', 'Creating medical summary from transcription...', 5000);
 
     // Get the appropriate transcription based on the active section
     let currentTranscription = this.transcription;
@@ -1211,40 +1212,49 @@ export class AppComponent implements OnInit, OnDestroy {
     
     // If this method is called after view init, we need to manually update the button
     setTimeout(() => {
-      const askAIButton = document.querySelector('.ask-ai-button') as HTMLButtonElement;
-      if (askAIButton) {
-        console.log('Found Ask AI button, enabling independently');
-        askAIButton.disabled = false;
+      const askAIButtons = document.querySelectorAll('.ask-ai-button') as NodeListOf<HTMLButtonElement>;
+      if (askAIButtons.length > 0) {
+        console.log('Found Ask AI buttons, enabling independently');
         
-        // Add stronger click handler
-        const clickHandler = () => {
-          console.log('Ask AI button clicked from TypeScript handler');
-          askAIButton.classList.add('feedback-click');
-          setTimeout(() => {
-            askAIButton.classList.remove('feedback-click');
-          }, 300);
+        askAIButtons.forEach(askAIButton => {
+          // Make sure the button is enabled
+          askAIButton.disabled = false;
+          askAIButton.removeAttribute('disabled');
           
-          // Toggle the Ask AI form
-          this.zone.run(() => {
-            this.toggleAskAI();
-          });
+          // Add stronger click handler
+          const clickHandler = () => {
+            console.log('Ask AI button clicked from TypeScript handler');
+            askAIButton.classList.add('feedback-click');
+            setTimeout(() => {
+              askAIButton.classList.remove('feedback-click');
+            }, 300);
+            
+            // Toggle the Ask AI form
+            this.zone.run(() => {
+              this.toggleAskAI();
+            });
+            
+            // If there's no text in the transcription, provide a helpful message
+            if (!this.transcription || this.transcription.trim() === '') {
+              this.showToast('info', 'No Transcription', 'No transcription available. You can still ask general medical questions.', 3000);
+            }
+          };
           
-          // If there's no text in the transcription, provide a helpful message
-          if (!this.transcription || this.transcription.trim() === '') {
-            this.showToast('info', 'No Transcription', 'No transcription available. You can still ask general medical questions.', 3000);
-          }
-        };
-        
-        // Use capture to ensure our handler runs
-        askAIButton.addEventListener('click', clickHandler, true);
-        
-        // Ensure keyboard activation works
-        askAIButton.addEventListener('keydown', (e) => {
-          if (e.key === 'Enter') {
-            e.preventDefault();
-            clickHandler();
-          }
-        }, true);
+          // Remove existing listeners to avoid duplicates
+          const newElement = askAIButton.cloneNode(true) as HTMLButtonElement;
+          askAIButton.parentNode?.replaceChild(newElement, askAIButton);
+          
+          // Use capture to ensure our handler runs
+          newElement.addEventListener('click', clickHandler, true);
+          
+          // Ensure keyboard activation works
+          newElement.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              clickHandler();
+            }
+          }, true);
+        });
       }
     }, 500);
   }

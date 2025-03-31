@@ -1964,6 +1964,10 @@ a:focus, button:focus, input:focus, textarea:focus, select:focus, .collapsible-h
   border-left-color: #3b82f6;
 }
 
+.toast.primary {
+  border-left-color: #2196f3;
+}
+
 .toast:hover {
   transform: translateY(-3px) !important;
   box-shadow: 0 12px 30px rgba(33, 37, 41, 0.2);
@@ -1995,6 +1999,10 @@ a:focus, button:focus, input:focus, textarea:focus, select:focus, .collapsible-h
 
 .toast.info .toast-icon i {
   color: #3b82f6;
+}
+
+.toast.primary .toast-icon i {
+  color: #2196f3;
 }
 
 .toast-content {
@@ -2067,6 +2075,10 @@ a:focus, button:focus, input:focus, textarea:focus, select:focus, .collapsible-h
 
 .toast.info .toast-progress {
   background-color: #3b82f6;
+}
+
+.toast.primary .toast-progress {
+  background-color: #2196f3;
 }
 
 @keyframes toast-slide-in {
