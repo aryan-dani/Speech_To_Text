@@ -7,6 +7,6 @@ export const environment = {
     reconnectBaseDelay: 3000,
     maxReconnectAttempts: 100, // Maximum number of reconnection attempts
     useSecureWebSockets: false, // Set to true to use wss:// instead of ws://
-    connectionTimeout: 5000 // Connection timeout in milliseconds
-  }
+    connectionTimeout: 5000, // Connection timeout in milliseconds
+  },
 };
