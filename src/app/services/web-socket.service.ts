@@ -6,34 +6,11 @@ import { LoggingService } from './logging.service';
 // Configuration constants from environment
 const BACKEND_CONFIG = environment.backend;
 
-  // Define protocol variables - these will be updated in the constructor if needed
+// Define protocol variables - these will be updated in the constructor if needed
 let WS_PROTOCOL = BACKEND_CONFIG.useSecureWebSockets ? 'wss' : 'ws';
 let HTTP_PROTOCOL = BACKEND_CONFIG.useSecureWebSockets ? 'https' : 'http';
 let BACKEND_WS_BASE = `${WS_PROTOCOL}://${BACKEND_CONFIG.host}`;
 let BACKEND_HTTP_BASE = `${HTTP_PROTOCOL}://${BACKEND_CONFIG.host}`;
-
-// const BACKEND_WS_BASE = `${WS_PROTOCOL}://${BACKEND_CONFIG.host}:${BACKEND_CONFIG.port}`;
-// const BACKEND_HTTP_BASE = `${HTTP_PROTOCOL}://${BACKEND_CONFIG.host}:${BACKEND_CONFIG.port}`;
-
-// Type definitions for better type safety
-interface SummaryRequest {
-  transcription: string;
-}
-
-interface AIRequest {
-  query: string;
-  transcription: string;
-}
-
-interface WebSocketConnection {
-  socket: WebSocket | null;
-  url: string;
-  reconnectAttempts: number;
-  subject?: Subject<any>;
-  connectionTimeout?: number;
-}
-
-type ConnectionType = 'transcribe' | 'summary';
 
 // WebSocket error code descriptions for better error messages
 const WS_ERROR_CODES: Record<number, string> = {
@@ -54,6 +31,26 @@ const WS_ERROR_CODES: Record<number, string> = {
   1014: 'Bad gateway',
   1015: 'TLS handshake',
 };
+
+// Type definitions for better type safety
+interface SummaryRequest {
+  transcription: string;
+}
+
+interface AIRequest {
+  query: string;
+  transcription: string;
+}
+
+interface WebSocketConnection {
+  socket: WebSocket | null;
+  url: string;
+  reconnectAttempts: number;
+  subject?: Subject<any>;
+  connectionTimeout?: number;
+}
+
+type ConnectionType = 'transcribe' | 'summary';
 
 @Injectable({
   providedIn: 'root',

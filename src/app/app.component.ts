@@ -4,23 +4,28 @@ import {
   OnDestroy,
   HostListener,
   NgZone,
+  AfterViewInit
 } from '@angular/core';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { HttpClient } from '@angular/common/http'; // Removed deprecated HttpClientModule
 import { WebSocketService } from './services/web-socket.service';
 import { LoadingService } from './services/loading.service';
 import { HelpService } from './services/help.service';
+import { Subject, from } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [MatToolbarModule, FormsModule, CommonModule], // Removed deprecated HttpClientModule
+  imports: [MatToolbarModule, FormsModule, CommonModule],
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.css'],
 })
-export class AppComponent implements OnInit, OnDestroy {
+export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
+  // Cleanup subject for better subscription management
+  private destroy$ = new Subject<void>();
+
   private boundCheckScreenSize: any;
   clearSections: boolean = false;
   sidebarCollapsed: boolean = true; // Set to true to make sidebar collapsed by default
@@ -127,7 +132,6 @@ export class AppComponent implements OnInit, OnDestroy {
 
   constructor(
     private wsService: WebSocketService,
-    private http: HttpClient,
     private zone: NgZone,
     private loadingService: LoadingService,
     private helpService: HelpService
@@ -181,7 +185,18 @@ export class AppComponent implements OnInit, OnDestroy {
     document.body.classList.add('transitions-enabled');
   }
 
+  ngAfterViewInit(): void {
+    // Initialization that requires DOM to be ready
+    if (typeof document !== 'undefined') {
+      this.ensureCardKeyboardAccessibility();
+    }
+  }
+
   ngOnDestroy(): void {
+    // Signal all subscriptions to complete
+    this.destroy$.next();
+    this.destroy$.complete();
+
     // Clean up by closing the WebSocket connection
     this.wsService.close();
 
@@ -485,53 +500,55 @@ export class AppComponent implements OnInit, OnDestroy {
       }
     }, 100);
 
-    this.wsService
-      .generateSummary(currentTranscription)
-      .then((data) => {
-        console.log('Summary data received:', data);
-        this.processingTranscription = false;
+    from(this.wsService.generateSummary(currentTranscription))
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (data: any) => {
+          console.log('Summary data received:', data);
+          this.processingTranscription = false;
 
-        try {
-          // Try to parse the response as structured medical data
-          if (typeof data === 'object') {
-            // Store the structured data for display
-            this.medicalHistory = data;
+          try {
+            // Try to parse the response as structured medical data
+            if (typeof data === 'object') {
+              // Store the structured data for display
+              this.medicalHistory = data;
 
-            // Create a readable summary from the structured data
-            this.summary =
-              'Summary generated successfully. See structured data below.';
-            this.showToast('success', 'Summary Generated', 'Your medical report has been created successfully.', 5000);
-          } else if (typeof data === 'string') {
-            // If it's a string, use it directly
-            this.summary = data;
-
-            // Try to parse it as JSON in case it's a stringified JSON object
-            try {
-              const jsonData = JSON.parse(data);
-              this.medicalHistory = jsonData;
+              // Create a readable summary from the structured data
+              this.summary =
+                'Summary generated successfully. See structured data below.';
               this.showToast('success', 'Summary Generated', 'Your medical report has been created successfully.', 5000);
-            } catch (e) {
-              // Not JSON, just use as text
-              console.log('Response is not JSON, using as plain text');
-              this.showToast('success', 'Summary Generated', 'Your text summary has been created.', 5000);
-            }
-          } else {
-            this.summary = 'Received response in unknown format';
-            this.showToast('warning', 'Unusual Response', 'The server returned data in an unexpected format.', 5000);
-          }
-        } catch (error) {
-          console.error('Error processing summary:', error);
-          this.summary = 'Error processing summary response';
-          this.showToast('error', 'Processing Error', 'Could not process the summary response.', 5000);
-        }
+            } else if (typeof data === 'string') {
+              // If it's a string, use it directly
+              this.summary = data;
 
-        this.modelResponse = 'Model response received';
-      })
-      .catch((err) => {
-        console.error('WebSocket error:', err);
-        this.summary = 'Error: Could not generate summary. Please try again.';
-        this.processingTranscription = false;
-        this.showToast('error', 'Connection Error', 'Could not generate summary. Please try again.', 5000);
+              // Try to parse it as JSON in case it's a stringified JSON object
+              try {
+                const jsonData = JSON.parse(data);
+                this.medicalHistory = jsonData;
+                this.showToast('success', 'Summary Generated', 'Your medical report has been created successfully.', 5000);
+              } catch (e) {
+                // Not JSON, just use as text
+                console.log('Response is not JSON, using as plain text');
+                this.showToast('success', 'Summary Generated', 'Your text summary has been created.', 5000);
+              }
+            } else {
+              this.summary = 'Received response in unknown format';
+              this.showToast('warning', 'Unusual Response', 'The server returned data in an unexpected format.', 5000);
+            }
+          } catch (error) {
+            console.error('Error processing summary:', error);
+            this.summary = 'Error processing summary response';
+            this.showToast('error', 'Processing Error', 'Could not process the summary response.', 5000);
+          }
+
+          this.modelResponse = 'Model response received';
+        },
+        error: (err: Error) => {
+          console.error('WebSocket error:', err);
+          this.summary = 'Error: Could not generate summary. Please try again.';
+          this.processingTranscription = false;
+          this.showToast('error', 'Connection Error', 'Could not generate summary. Please try again.', 5000);
+        }
       });
   }
 
@@ -638,7 +655,7 @@ export class AppComponent implements OnInit, OnDestroy {
     }
 
     if (!this.query || this.query.trim() === '') {
-      this.llamaResponse = 'Error: Please enter a question to ask.';
+      this.llamaResponse = 'Error: Please enter a question to ask.'; 
       this.processingTranscription = false;
       this.showToast('error', 'Empty Question', 'Please enter a question to ask.', 3000);
       return;
@@ -654,7 +671,7 @@ export class AppComponent implements OnInit, OnDestroy {
 
     this.wsService
       .askAI(currentTranscription, this.query)
-      .then((response) => {
+      .then((response: string) => {
         console.log('Llama response received:', response);
         this.processingTranscription = false;
 
@@ -691,7 +708,7 @@ export class AppComponent implements OnInit, OnDestroy {
           }
         }
       })
-      .catch((err) => {
+      .catch((err: Error) => {
         console.error('WebSocket error:', err);
         this.llamaResponse = `Error: ${
           err.message || 'Error communicating with AI service'
@@ -824,6 +841,7 @@ export class AppComponent implements OnInit, OnDestroy {
           // Subscribe to the direct WebSocket transcription stream
           this.transcriptionStream = this.wsService
             .getTranscriptionStream()
+            .pipe(takeUntil(this.destroy$))
             .subscribe({
               next: (message: string) =>
                 this.zone.run(() => {
@@ -952,13 +970,26 @@ export class AppComponent implements OnInit, OnDestroy {
 
   // Use deprecated ScriptProcessorNode (will be replaced with AudioWorkletNode in future)
   private useScriptProcessorNode(): void {
-    this.scriptNode = this.audioContext!.createScriptProcessor(1024, 1, 1);
+    // Create an AudioWorkletNode when available (modern approach), otherwise fallback to ScriptProcessorNode
+    if (this.audioContext && 'audioWorklet' in this.audioContext) {
+      // Modern approach is implemented in toggleRecording method
+      console.log('AudioWorklet is supported, should be using that instead of ScriptProcessorNode');
+      return;
+    }
+    
+    // DEPRECATION WARNING: ScriptProcessorNode is deprecated.
+    // This is a fallback for browsers that don't support AudioWorkletNode
+    console.warn('WARNING: Using deprecated ScriptProcessorNode as a fallback');
+    
+    // Using a larger buffer size to reduce performance impact
+    const bufferSize = 2048; // Increased from 1024 for better performance
+    this.scriptNode = this.audioContext!.createScriptProcessor(bufferSize, 1, 1);
     
     // Clear any previously recorded chunks when starting a new recording
     this.recordedChunks = [];
 
     // Process audio data when available
-    this.scriptNode.onaudioprocess = (event: any) => {
+    this.scriptNode.onaudioprocess = (event: AudioProcessingEvent) => {
       const inputBuffer = event.inputBuffer;
       const channelData = inputBuffer.getChannelData(0); // Mono channel
       const pcmData = this.floatTo16BitPCM(channelData);
@@ -1276,11 +1307,6 @@ export class AppComponent implements OnInit, OnDestroy {
         });
       });
     }, 1000);
-  }
-
-  ngAfterViewInit() {
-    // Call this to ensure keyboard accessibility is set up after view is ready
-    this.ensureCardKeyboardAccessibility();
   }
 
   // Add these methods to handle keyboard events in the Ask AI form
