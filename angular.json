@@ -20,7 +20,6 @@
             "tsConfig": "tsconfig.app.json",
             "assets": [
               "src/favicon.ico",
-              "src/assets",
               {
                 "glob": "**/*",
                 "input": "src/assets",
@@ -31,11 +30,15 @@
               "@angular/material/prebuilt-themes/cyan-orange.css",
               "src/styles.css"
             ],
-            "scripts": [],
-            "server": "src/main.server.ts",
-            "outputMode": "server",
-            "ssr": {
-              "entry": "src/server.ts"
+            "scripts": ["src/assets/js/animations.js"],
+            "outputMode": "static",
+            "optimization": {
+              "scripts": true,
+              "styles": {
+                "minify": true,
+                "inlineCritical": true
+              },
+              "fonts": true
             }
           },
           "configurations": {
