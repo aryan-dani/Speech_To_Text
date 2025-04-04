@@ -53,6 +53,7 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
   private audioElement: HTMLAudioElement | null = null;
   private recordedChunks: Int16Array[] = [];
   isPlaying: boolean = false;
+  uploadedFileUrl: string = ''; // URL for uploaded audio/video files
 
   // Sidebar properties
   isMobile: boolean = false;
@@ -393,12 +394,21 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
     
     if (event.dataTransfer?.files.length) {
       const file = event.dataTransfer.files[0];
-      if (file.type.startsWith('audio/')) {
+      if (file.type.startsWith('audio/') || file.type === 'video/mp4') {
         this.selectedFile = file;
         this.selectedFileName = file.name;
+        
+        // Create URL for selected file so it can be played
+        if (this.uploadedFileUrl) {
+          URL.revokeObjectURL(this.uploadedFileUrl);
+        }
+        if (this.selectedFile) {
+          this.uploadedFileUrl = URL.createObjectURL(this.selectedFile);
+        }
+        
         this.showToast('success', 'File Added', `${file.name} has been added.`, 3000);
       } else {
-        this.showToast('error', 'Invalid File', 'Please upload an audio file.', 5000);
+        this.showToast('error', 'Invalid File', 'Please upload an audio or MP4 video file.', 5000);
       }
     }
   }
@@ -467,6 +477,7 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
     this.processingTranscription = true;
     
     // Important: Don't clear the medical history when regenerating summary
+    // This ensures hospitalization/surgical history buttons remain visible
     // This ensures hospitalization/surgical history buttons remain visible
     // this.medicalHistory = null; // Removing this line
     
@@ -724,10 +735,20 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
       this.selectedFile = event.target.files[0];
       this.selectedFileName = this.selectedFile ? this.selectedFile.name : '';
       console.log('File selected:', this.selectedFileName);
+      
+      // Create URL for selected file so it can be played
+      if (this.uploadedFileUrl) {
+        URL.revokeObjectURL(this.uploadedFileUrl);
+      }
+      if (this.selectedFile) {
+        this.uploadedFileUrl = URL.createObjectURL(this.selectedFile);
+      }
+      
       this.showToast('info', 'File Selected', `${this.selectedFileName} ready for upload.`, 3000);
     } else {
       this.selectedFile = null;
       this.selectedFileName = '';
+      this.uploadedFileUrl = '';
     }
   }
 
