@@ -90,31 +90,46 @@
         </div>
 
         <!-- Ask AI Form with Enhanced Styling -->
-        <div class="ai-response-container" *ngIf="showAskAIForm">
+        <div class="ai-response-container" *ngIf="showAskAIForm" [@fadeInOut]>
           <div class="ai-response-header">
             <div class="ai-avatar">
               <i class="material-icons">psychology</i>
             </div>
             <h3 class="ai-response-title">Ask the AI Assistant</h3>
+            <button class="close-ai-button" (click)="toggleAskAI()">
+              <i class="material-icons">close</i>
+            </button>
           </div>
           
           <div class="form-group">
             <label class="form-label" for="ai-query">Your question:</label>
-            <input type="text" 
-                   id="ai-query" 
-                   class="form-input" 
-                   [(ngModel)]="query" 
-                   placeholder="Ask a question about the transcription..."
-                   (keydown.enter)="askLlama()">
+            <div class="enhanced-input-container">
+              <input type="text" 
+                     id="ai-query" 
+                     class="form-input" 
+                     [(ngModel)]="query" 
+                     placeholder="Ask a question about the transcription..."
+                     (keydown.enter)="askLlama()">
+              <div class="input-icon">
+                <i class="material-icons">help_outline</i>
+              </div>
+            </div>
             <p class="form-help">Example: "What are the main symptoms mentioned?" or "Summarize the patient's condition"</p>
           </div>
           
           <button class="submit-button" (click)="askLlama()" [disabled]="!query">
             <i class="material-icons">send</i> Submit Question
+            <div class="button-ripple"></div>
           </button>
           
           <div class="ai-response-content" *ngIf="llamaResponse">
-            <p>{{ llamaResponse }}</p>
+            <div class="response-header">
+              <i class="material-icons">smart_toy</i>
+              <span>AI Response</span>
+            </div>
+            <div class="response-body">
+              <p>{{ llamaResponse }}</p>
+            </div>
           </div>
         </div>
 
@@ -201,32 +216,46 @@
         </div>
 
         <!-- AI Response Container -->
-        <div class="ai-response-container" *ngIf="showAskAIForm">
+        <div class="ai-response-container" *ngIf="showAskAIForm" [@fadeInOut]>
           <div class="ai-response-header">
             <div class="ai-avatar">
               <i class="material-icons">psychology</i>
             </div>
             <h3 class="ai-response-title">Ask the AI Assistant</h3>
+            <button class="close-ai-button" (click)="toggleAskAI()">
+              <i class="material-icons">close</i>
+            </button>
           </div>
           
           <div class="form-group">
-            <label class="form-label" for="ai-query-file">Your question:</label>
-            <input type="text" 
-                   id="ai-query-file" 
-                   class="form-input" 
-                   [(ngModel)]="query" 
-                   placeholder="Ask a question about the transcription..."
-                   (keydown.enter)="askLlama()">
+            <label class="form-label" for="ai-query">Your question:</label>
+            <div class="enhanced-input-container">
+              <input type="text" 
+                     id="ai-query" 
+                     class="form-input" 
+                     [(ngModel)]="query" 
+                     placeholder="Ask a question about the transcription..."
+                     (keydown.enter)="askLlama()">
+              <div class="input-icon">
+                <i class="material-icons">help_outline</i>
+              </div>
+            </div>
+            <p class="form-help">Example: "What are the main symptoms mentioned?" or "Summarize the patient's condition"</p>
           </div>
           
-          <button class="submit-button" 
-                  (click)="askLlama()" 
-                  [disabled]="!query">
+          <button class="submit-button" (click)="askLlama()" [disabled]="!query">
             <i class="material-icons">send</i> Submit Question
+            <div class="button-ripple"></div>
           </button>
           
           <div class="ai-response-content" *ngIf="llamaResponse">
-            <p>{{ llamaResponse }}</p>
+            <div class="response-header">
+              <i class="material-icons">smart_toy</i>
+              <span>AI Response</span>
+            </div>
+            <div class="response-body">
+              <p>{{ llamaResponse }}</p>
+            </div>
           </div>
         </div>
       </div>
@@ -281,32 +310,46 @@
         </div>
 
         <!-- AI Response Container -->
-        <div class="ai-response-container" *ngIf="showAskAIForm">
+        <div class="ai-response-container" *ngIf="showAskAIForm" [@fadeInOut]>
           <div class="ai-response-header">
             <div class="ai-avatar">
               <i class="material-icons">psychology</i>
             </div>
             <h3 class="ai-response-title">Ask the AI Assistant</h3>
+            <button class="close-ai-button" (click)="toggleAskAI()">
+              <i class="material-icons">close</i>
+            </button>
           </div>
           
           <div class="form-group">
-            <label class="form-label" for="ai-query-sample">Your question:</label>
-            <input type="text" 
-                   id="ai-query-sample" 
-                   class="form-input" 
-                   [(ngModel)]="query" 
-                   placeholder="Ask a question about the transcription..."
-                   (keydown.enter)="askLlama()">
+            <label class="form-label" for="ai-query">Your question:</label>
+            <div class="enhanced-input-container">
+              <input type="text" 
+                     id="ai-query" 
+                     class="form-input" 
+                     [(ngModel)]="query" 
+                     placeholder="Ask a question about the transcription..."
+                     (keydown.enter)="askLlama()">
+              <div class="input-icon">
+                <i class="material-icons">help_outline</i>
+              </div>
+            </div>
+            <p class="form-help">Example: "What are the main symptoms mentioned?" or "Summarize the patient's condition"</p>
           </div>
           
-          <button class="submit-button" 
-                  (click)="askLlama()" 
-                  [disabled]="!query">
+          <button class="submit-button" (click)="askLlama()" [disabled]="!query">
             <i class="material-icons">send</i> Submit Question
+            <div class="button-ripple"></div>
           </button>
           
           <div class="ai-response-content" *ngIf="llamaResponse">
-            <p>{{ llamaResponse }}</p>
+            <div class="response-header">
+              <i class="material-icons">smart_toy</i>
+              <span>AI Response</span>
+            </div>
+            <div class="response-body">
+              <p>{{ llamaResponse }}</p>
+            </div>
           </div>
         </div>
       </div>
