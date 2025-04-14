@@ -12,10 +12,13 @@ export class ApiService {
     const formData = new FormData();
     formData.append('file', file);
 
-    // Use the proxy path if enabled
+    // Determine protocol based on environment setting
+    const protocol = environment.backend.useSecureWebSockets ? 'https' : 'http';
+
+    // Use the proxy path if enabled, otherwise construct the URL with the determined protocol
     const baseUrl = environment.api.useProxy
       ? environment.api.proxyPath
-      : `http://${environment.backend.host}`;
+      : `${protocol}://${environment.backend.host}`;
 
     return this.http.post(`${baseUrl}/upload/`, formData);
   }
@@ -33,6 +36,5 @@ export class ApiService {
     }
   }
 
-  private uploadInChunks(file: File) {
-  }
+  private uploadInChunks(file: File) {}
 }

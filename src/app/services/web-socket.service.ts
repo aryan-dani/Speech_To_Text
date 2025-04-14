@@ -94,30 +94,34 @@ export class WebSocketService {
   private transcriptionDedupeWindow: number = 1000; // 1 second window to deduplicate
 
   constructor(private zone: NgZone, private logger: LoggingService) {
-    // Auto-detect protocol from current page URL and update configuration
-    if (typeof window !== 'undefined') {
-      const isSecure = window.location.protocol === 'https:';
-      this.logger.info(
-        `Detected protocol: ${window.location.protocol}, using ${
-          isSecure ? 'secure' : 'standard'
-        } WebSockets`
-      );
+    // Use the configuration from environment.ts first
+    WS_PROTOCOL = BACKEND_CONFIG.useSecureWebSockets ? 'wss' : 'ws';
+    HTTP_PROTOCOL = BACKEND_CONFIG.useSecureWebSockets ? 'https' : 'http';
 
-      // Update protocol settings based on current page protocol
-      WS_PROTOCOL = isSecure ? 'wss' : 'ws';
-      HTTP_PROTOCOL = isSecure ? 'https' : 'http';
-      // Rebuild base URLs with potentially updated protocol and existing port config
-      BACKEND_WS_BASE = buildBaseUrl(
-        WS_PROTOCOL,
-        BACKEND_CONFIG.host,
-        BACKEND_CONFIG.port
-      );
-      BACKEND_HTTP_BASE = buildBaseUrl(
-        HTTP_PROTOCOL,
-        BACKEND_CONFIG.host,
-        BACKEND_CONFIG.port
-      );
+    // Log the configured protocol
+    this.logger.info(
+      `WebSocket protocol configured via environment: ${WS_PROTOCOL}`
+    );
+
+    // Auto-detect protocol from current page URL for logging or potential future use,
+    // but don't override the environment setting for connection URLs.
+    if (typeof window !== 'undefined') {
+      const pageProtocol = window.location.protocol;
+      this.logger.info(`Detected page protocol: ${pageProtocol}`);
+      // Example: You could potentially use pageProtocol for other non-WebSocket logic if needed
     }
+
+    // Build base URLs using the protocol determined from environment.ts
+    BACKEND_WS_BASE = buildBaseUrl(
+      WS_PROTOCOL,
+      BACKEND_CONFIG.host,
+      BACKEND_CONFIG.port
+    );
+    BACKEND_HTTP_BASE = buildBaseUrl(
+      HTTP_PROTOCOL,
+      BACKEND_CONFIG.host,
+      BACKEND_CONFIG.port
+    );
 
     // Initialize endpoints with updated protocol and port
     this.endpoints = {
@@ -273,28 +277,6 @@ export class WebSocketService {
             error
           );
 
-          // If we're using secure WebSocket (wss) and getting errors, try falling back to insecure (ws)
-          if (
-            connection.url.startsWith('wss://') &&
-            connection.reconnectAttempts <= 1
-          ) {
-            this.logger.warn(
-              'Secure WebSocket connection failed. Trying fallback to standard WebSocket...'
-            );
-            const fallbackUrl = connection.url.replace('wss://', 'ws://');
-            connection.url = fallbackUrl;
-
-            // Close the current socket if it exists
-            if (connection.socket) {
-              connection.socket.close();
-              connection.socket = null;
-            }
-
-            // Try to connect with the fallback URL
-            setTimeout(() => this.connectWebSocket(type), 1000);
-            return;
-          }
-
           if (connection.subject) {
             if (type === 'transcribe') {
               connection.subject.next(`WebSocket error: ${errorMessage}`);
@@ -302,6 +284,8 @@ export class WebSocketService {
               connection.subject.error(`WebSocket error: ${errorMessage}`);
             }
           }
+          // Attempt reconnection directly without changing protocol
+          this.handleConnectionFailure(type, errorMessage);
         };
 
         connection.socket.onclose = (event) => {
@@ -318,28 +302,6 @@ export class WebSocketService {
             );
           } else {
             this.logger.warn(`${type} WebSocket connection died unexpectedly`);
-
-            // If we're using secure WebSocket (wss) and getting closed connections, try falling back to insecure (ws)
-            if (
-              connection.url.startsWith('wss://') &&
-              connection.reconnectAttempts <= 1
-            ) {
-              this.logger.warn(
-                'Secure WebSocket connection closed. Trying fallback to standard WebSocket...'
-              );
-              const fallbackUrl = connection.url.replace('wss://', 'ws://');
-              connection.url = fallbackUrl;
-
-              // Close the current socket if it exists
-              if (connection.socket) {
-                connection.socket.close();
-                connection.socket = null;
-              }
-
-              // Try to connect with the fallback URL
-              setTimeout(() => this.connectWebSocket(type), 1000);
-              return;
-            }
 
             this.handleConnectionFailure(type, closeReason);
           }
