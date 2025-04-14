@@ -1,5 +1,8 @@
 <!-- Improved UI with enhanced UX components and modern design patterns -->
- <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+<link
+  href="https://fonts.googleapis.com/icon?family=Material+Icons"
+  rel="stylesheet"
+/>
 <div class="app-container" [class.sidebar-collapsed]="sidebarCollapsed">
   <!-- Mobile Menu Toggle for Responsive Design -->
   <div class="mobile-menu-toggle" (click)="toggleSidebar()">
@@ -7,7 +10,11 @@
   </div>
 
   <!-- Overlay for Mobile Sidebar -->
-  <div class="sidebar-overlay" [class.active]="sidebarActive" (click)="closeSidebar()"></div>
+  <div
+    class="sidebar-overlay"
+    [class.active]="sidebarActive"
+    (click)="closeSidebar()"
+  ></div>
 
   <!-- Enhanced Sidebar -->
   <div class="sidebar" [class.active]="sidebarActive">
@@ -17,15 +24,30 @@
     </div>
     <nav class="sidebar-nav">
       <ul>
-        <li [class.active]="activeSection === 'live'" (click)="navigateTo('live')" tabindex="0" (keydown.enter)="navigateTo('live')">
+        <li
+          [class.active]="activeSection === 'live'"
+          (click)="navigateTo('live')"
+          tabindex="0"
+          (keydown.enter)="navigateTo('live')"
+        >
           <i class="material-icons nav-icon">mic</i>
           <span class="nav-text">Live Recording</span>
         </li>
-        <li [class.active]="activeSection === 'file'" (click)="navigateTo('file')" tabindex="0" (keydown.enter)="navigateTo('file')">
+        <li
+          [class.active]="activeSection === 'file'"
+          (click)="navigateTo('file')"
+          tabindex="0"
+          (keydown.enter)="navigateTo('file')"
+        >
           <i class="material-icons nav-icon">file_upload</i>
           <span class="nav-text">Upload Audio</span>
         </li>
-        <li [class.active]="activeSection === 'samples'" (click)="navigateTo('samples')" tabindex="0" (keydown.enter)="navigateTo('samples')">
+        <li
+          [class.active]="activeSection === 'samples'"
+          (click)="navigateTo('samples')"
+          tabindex="0"
+          (keydown.enter)="navigateTo('samples')"
+        >
           <i class="material-icons nav-icon">view_list</i>
           <span class="nav-text">Sample Transcriptions</span>
         </li>
@@ -45,48 +67,84 @@
     <div class="content-section fade-in" *ngIf="activeSection === 'live'">
       <div class="card">
         <h2 class="section-title">Live Recording</h2>
-        <p class="section-description">Capture high-quality speech and convert it to text in real-time</p>
+        <p class="section-description">
+          Capture high-quality speech and convert it to text in real-time
+        </p>
 
         <!-- Status Indicator -->
-        <div class="status-indicator-container" [class.recording]="isRecording" *ngIf="isRecording || processingTranscription">
-          <div class="status-dot" [class.recording]="isRecording" [class.processing]="processingTranscription && !isRecording"></div>
-          <span class="status-text">{{ isRecording ? 'Recording in progress...' : 'Processing audio...' }}</span>
+        <div
+          class="status-indicator-container"
+          [class.recording]="isRecording"
+          *ngIf="isRecording || processingTranscription"
+        >
+          <div
+            class="status-dot"
+            [class.recording]="isRecording"
+            [class.processing]="processingTranscription && !isRecording"
+          ></div>
+          <span class="status-text">{{
+            isRecording ? "Recording in progress..." : "Processing audio..."
+          }}</span>
         </div>
 
         <!-- Audio Visualization -->
         <div class="audio-visualizer" *ngIf="isRecording">
           <div class="audio-bars">
-            <div class="audio-bar" *ngFor="let i of [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]" 
-                 [style.height.%]="getVisualizationHeight(i)" 
-                 [class.active]="isRecording"></div>
+            <div
+              class="audio-bar"
+              *ngFor="
+                let i of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+              "
+              [style.height.%]="getVisualizationHeight(i)"
+              [class.active]="isRecording"
+            ></div>
           </div>
         </div>
 
         <!-- Enhanced Control Panel -->
         <div class="control-buttons">
-          <button class="action-button record-button" [class.recording]="isRecording" (click)="toggleRecording()" [disabled]="processingTranscription">
-            <i class="material-icons">{{ isRecording ? 'stop' : 'mic' }}</i>
-            {{ isRecording ? 'Stop Recording' : 'Start Recording' }}
+          <button
+            class="action-button record-button"
+            [class.recording]="isRecording"
+            (click)="toggleRecording()"
+            [disabled]="processingTranscription"
+          >
+            <i class="material-icons">{{ isRecording ? "stop" : "mic" }}</i>
+            {{ isRecording ? "Stop Recording" : "Start Recording" }}
           </button>
-          
-          <button class="action-button magic-button tooltip" (click)="generateSummaryWS()" [disabled]="!transcription">
+
+          <button
+            class="action-button magic-button tooltip"
+            (click)="generateSummaryWS()"
+            [disabled]="!transcription"
+          >
             <i class="material-icons">auto_awesome</i>
             Generate Summary
-            <span class="tooltiptext">Convert transcription into a structured medical report</span>
+            <span class="tooltiptext"
+              >Convert transcription into a structured medical report</span
+            >
           </button>
-          
-          <button class="action-button ask-ai-button tooltip" (click)="toggleAskAI()" type="button">
+
+          <button
+            class="action-button ask-ai-button tooltip"
+            (click)="toggleAskAI()"
+            type="button"
+          >
             <i class="material-icons">psychology</i>
             Ask AI
-            <span class="tooltiptext">Ask questions about the transcription</span>
+            <span class="tooltiptext"
+              >Ask questions about the transcription</span
+            >
           </button>
         </div>
 
         <!-- Improved Transcription Area -->
         <div class="transcription-area">
-          <textarea [(ngModel)]="transcription" 
-                    rows="6" 
-                    placeholder="Your transcription will appear here..."></textarea>
+          <textarea
+            [(ngModel)]="transcription"
+            rows="6"
+            placeholder="Your transcription will appear here..."
+          ></textarea>
         </div>
 
         <!-- Ask AI Form with Enhanced Styling -->
@@ -100,28 +158,37 @@
               <i class="material-icons">close</i>
             </button>
           </div>
-          
+
           <div class="form-group">
             <label class="form-label" for="ai-query">Your question:</label>
             <div class="enhanced-input-container">
-              <input type="text" 
-                     id="ai-query" 
-                     class="form-input" 
-                     [(ngModel)]="query" 
-                     placeholder="Ask a question about the transcription..."
-                     (keydown.enter)="askLlama()">
+              <input
+                type="text"
+                id="ai-query"
+                class="form-input"
+                [(ngModel)]="query"
+                placeholder="Ask a question about the transcription..."
+                (keydown.enter)="askLlama()"
+              />
               <div class="input-icon">
                 <i class="material-icons">help_outline</i>
               </div>
             </div>
-            <p class="form-help">Example: "What are the main symptoms mentioned?" or "Summarize the patient's condition"</p>
+            <p class="form-help">
+              Example: "What are the main symptoms mentioned?" or "Summarize the
+              patient's condition"
+            </p>
           </div>
-          
-          <button class="submit-button" (click)="askLlama()" [disabled]="!query">
+
+          <button
+            class="submit-button"
+            (click)="askLlama()"
+            [disabled]="!query"
+          >
             <i class="material-icons">send</i> Submit Question
             <div class="button-ripple"></div>
           </button>
-          
+
           <div class="ai-response-content" *ngIf="llamaResponse">
             <div class="response-header">
               <i class="material-icons">smart_toy</i>
@@ -145,35 +212,45 @@
     <div class="content-section fade-in" *ngIf="activeSection === 'file'">
       <div class="card">
         <h2 class="section-title">Upload Audio File</h2>
-        <p class="section-description">Upload pre-recorded audio files for transcription</p>
+        <p class="section-description">
+          Upload pre-recorded audio files for transcription
+        </p>
 
         <!-- Enhanced Upload Area -->
-        <div class="upload-area" 
-             [class.dragover]="isDragging" 
-             (dragover)="onDragOver($event)" 
-             (dragleave)="onDragLeave($event)" 
-             (drop)="onDrop($event)">
-          
+        <div
+          class="upload-area"
+          [class.dragover]="isDragging"
+          (dragover)="onDragOver($event)"
+          (dragleave)="onDragLeave($event)"
+          (drop)="onDrop($event)"
+        >
           <i class="material-icons upload-icon">cloud_upload</i>
-          <p class="upload-instructions">Drag & drop your audio or video file here or click to browse</p>
-          
-          <input type="file" 
-                 id="file-upload" 
-                 accept="audio/*,video/mp4" 
-                 (change)="onFileSelected($event)" 
-                 class="file-input">
-          
+          <p class="upload-instructions">
+            Drag & drop your audio or video file here or click to browse
+          </p>
+
+          <input
+            type="file"
+            id="file-upload"
+            accept="audio/*,video/mp4"
+            (change)="onFileSelected($event)"
+            class="file-input"
+          />
+
           <label for="file-upload" class="file-input-label">
             <i class="material-icons">folder_open</i> Browse Files
           </label>
-          
+
           <div class="file-name" *ngIf="selectedFileName">
             {{ selectedFileName }}
           </div>
-          
+
           <!-- File Upload Progress -->
           <div class="upload-progress" *ngIf="isUploading">
-            <div class="upload-progress-bar" [style.width.%]="uploadProgress"></div>
+            <div
+              class="upload-progress-bar"
+              [style.width.%]="uploadProgress"
+            ></div>
           </div>
         </div>
 
@@ -182,44 +259,71 @@
           <div class="status-dot processing"></div>
           <span class="status-text">Uploading file...</span>
         </div>
-        
-        <div class="status-indicator-container success" *ngIf="uploadedTranscription && !isUploading">
+
+        <div
+          class="status-indicator-container success"
+          *ngIf="uploadedTranscription && !isUploading"
+        >
           <div class="status-dot success"></div>
           <span class="status-text">File processed successfully</span>
         </div>
 
         <!-- Upload Button -->
         <div class="control-buttons">
-          <button class="action-button magic-button" 
-                  (click)="uploadAudio()" 
-                  [disabled]="!selectedFile || isUploading">
+          <button
+            class="action-button magic-button"
+            (click)="uploadAudio()"
+            [disabled]="!selectedFile || isUploading"
+          >
             <i class="material-icons">upload_file</i> Transcribe File
             <span class="spinner" *ngIf="isUploading"></span>
           </button>
-          
-          <button class="action-button magic-button" 
-                  (click)="generateSummaryWS()" 
-                  [disabled]="!uploadedTranscription">
+
+          <button
+            class="action-button magic-button"
+            (click)="generateSummaryWS()"
+            [disabled]="!uploadedTranscription"
+          >
             <i class="material-icons">auto_awesome</i> Generate Summary
           </button>
-          
-          <button class="action-button ask-ai-button" (click)="toggleAskAI()" type="button">
+
+          <button
+            class="action-button ask-ai-button"
+            (click)="toggleAskAI()"
+            type="button"
+          >
             <i class="material-icons">psychology</i> Ask AI
           </button>
         </div>
 
         <!-- Transcription Area -->
         <div class="transcription-area">
-          <textarea [(ngModel)]="uploadedTranscription" 
-                    rows="6" 
-                    placeholder="Transcription will appear here..."></textarea>
+          <textarea
+            [(ngModel)]="uploadedTranscription"
+            rows="6"
+            placeholder="Transcription will appear here..."
+          ></textarea>
         </div>
 
         <!-- Audio Player for Uploaded Files -->
         <div class="audio-player" *ngIf="selectedFile">
-          <h4><i class="material-icons">{{ selectedFile.type.includes('video') ? 'videocam' : 'headphones' }}</i> Uploaded Media</h4>
-          <audio *ngIf="selectedFile && !selectedFile.type.includes('video')" [src]="uploadedFileUrl" controls></audio>
-          <video *ngIf="selectedFile && selectedFile.type.includes('video')" [src]="uploadedFileUrl" controls width="100%"></video>
+          <h4>
+            <i class="material-icons">{{
+              selectedFile.type.includes("video") ? "videocam" : "headphones"
+            }}</i>
+            Uploaded Media
+          </h4>
+          <audio
+            *ngIf="selectedFile && !selectedFile.type.includes('video')"
+            [src]="uploadedFileUrl"
+            controls
+          ></audio>
+          <video
+            *ngIf="selectedFile && selectedFile.type.includes('video')"
+            [src]="uploadedFileUrl"
+            controls
+            width="100%"
+          ></video>
         </div>
 
         <!-- AI Response Container -->
@@ -233,28 +337,37 @@
               <i class="material-icons">close</i>
             </button>
           </div>
-          
+
           <div class="form-group">
             <label class="form-label" for="ai-query">Your question:</label>
             <div class="enhanced-input-container">
-              <input type="text" 
-                     id="ai-query" 
-                     class="form-input" 
-                     [(ngModel)]="query" 
-                     placeholder="Ask a question about the transcription..."
-                     (keydown.enter)="askLlama()">
+              <input
+                type="text"
+                id="ai-query"
+                class="form-input"
+                [(ngModel)]="query"
+                placeholder="Ask a question about the transcription..."
+                (keydown.enter)="askLlama()"
+              />
               <div class="input-icon">
                 <i class="material-icons">help_outline</i>
               </div>
             </div>
-            <p class="form-help">Example: "What are the main symptoms mentioned?" or "Summarize the patient's condition"</p>
+            <p class="form-help">
+              Example: "What are the main symptoms mentioned?" or "Summarize the
+              patient's condition"
+            </p>
           </div>
-          
-          <button class="submit-button" (click)="askLlama()" [disabled]="!query">
+
+          <button
+            class="submit-button"
+            (click)="askLlama()"
+            [disabled]="!query"
+          >
             <i class="material-icons">send</i> Submit Question
             <div class="button-ripple"></div>
           </button>
-          
+
           <div class="ai-response-content" *ngIf="llamaResponse">
             <div class="response-header">
               <i class="material-icons">smart_toy</i>
@@ -272,25 +385,37 @@
     <div class="content-section fade-in" *ngIf="activeSection === 'samples'">
       <div class="card">
         <h2 class="section-title">Sample Transcriptions</h2>
-        <p class="section-description">Browse through pre-loaded sample transcriptions</p>
+        <p class="section-description">
+          Browse through pre-loaded sample transcriptions
+        </p>
 
         <!-- Enhanced Samples List -->
         <div class="samples-list">
-          <div class="sample-item" 
-               *ngFor="let sample of sampleTranscriptions; let i = index" 
-               (click)="loadSample(i)"
-               tabindex="0"
-               (keydown.enter)="loadSample(i)">
+          <div
+            class="sample-item"
+            *ngFor="let sample of sampleTranscriptions; let i = index"
+            (click)="loadSample(i)"
+            tabindex="0"
+            (keydown.enter)="loadSample(i)"
+          >
             <h3>Sample {{ i + 1 }}</h3>
             <p>{{ sample.preview }}</p>
             <div class="sample-meta">
-              <span><i class="material-icons">schedule</i>{{ sample.duration || '2:34' }}</span>
-              <span><i class="material-icons">insert_drive_file</i>{{ sample.type || 'Consultation' }}</span>
+              <span
+                ><i class="material-icons">schedule</i
+                >{{ sample.duration || "2:34" }}</span
+              >
+              <span
+                ><i class="material-icons">insert_drive_file</i
+                >{{ sample.type || "Consultation" }}</span
+              >
             </div>
           </div>
-          
-          <div class="sample-item empty" 
-               *ngIf="!sampleTranscriptions || sampleTranscriptions.length === 0">
+
+          <div
+            class="sample-item empty"
+            *ngIf="!sampleTranscriptions || sampleTranscriptions.length === 0"
+          >
             <i class="material-icons">folder_open</i>
             <p>No samples available</p>
           </div>
@@ -298,20 +423,28 @@
 
         <!-- Transcription Area -->
         <div class="transcription-area" *ngIf="selectedSample !== null">
-          <textarea [(ngModel)]="transcription" 
-                    rows="6" 
-                    placeholder="Select a sample to view"></textarea>
+          <textarea
+            [(ngModel)]="transcription"
+            rows="6"
+            placeholder="Select a sample to view"
+          ></textarea>
         </div>
 
         <!-- Sample Control Buttons -->
         <div class="control-buttons">
-          <button class="action-button magic-button" 
-                  (click)="generateSummaryWS()" 
-                  [disabled]="selectedSample === null">
+          <button
+            class="action-button magic-button"
+            (click)="generateSummaryWS()"
+            [disabled]="selectedSample === null"
+          >
             <i class="material-icons">auto_awesome</i> Generate Summary
           </button>
-          
-          <button class="action-button ask-ai-button" (click)="toggleAskAI()" type="button">
+
+          <button
+            class="action-button ask-ai-button"
+            (click)="toggleAskAI()"
+            type="button"
+          >
             <i class="material-icons">psychology</i> Ask AI
           </button>
         </div>
@@ -327,28 +460,37 @@
               <i class="material-icons">close</i>
             </button>
           </div>
-          
+
           <div class="form-group">
             <label class="form-label" for="ai-query">Your question:</label>
             <div class="enhanced-input-container">
-              <input type="text" 
-                     id="ai-query" 
-                     class="form-input" 
-                     [(ngModel)]="query" 
-                     placeholder="Ask a question about the transcription..."
-                     (keydown.enter)="askLlama()">
+              <input
+                type="text"
+                id="ai-query"
+                class="form-input"
+                [(ngModel)]="query"
+                placeholder="Ask a question about the transcription..."
+                (keydown.enter)="askLlama()"
+              />
               <div class="input-icon">
                 <i class="material-icons">help_outline</i>
               </div>
             </div>
-            <p class="form-help">Example: "What are the main symptoms mentioned?" or "Summarize the patient's condition"</p>
+            <p class="form-help">
+              Example: "What are the main symptoms mentioned?" or "Summarize the
+              patient's condition"
+            </p>
           </div>
-          
-          <button class="submit-button" (click)="askLlama()" [disabled]="!query">
+
+          <button
+            class="submit-button"
+            (click)="askLlama()"
+            [disabled]="!query"
+          >
             <i class="material-icons">send</i> Submit Question
             <div class="button-ripple"></div>
           </button>
-          
+
           <div class="ai-response-content" *ngIf="llamaResponse">
             <div class="response-header">
               <i class="material-icons">smart_toy</i>
@@ -367,10 +509,12 @@
       <div class="card">
         <h2 class="section-title">Text Summary</h2>
         <div class="transcription-area">
-          <textarea [(ngModel)]="summary" 
-                    rows="6" 
-                    placeholder="Summary output" 
-                    title="Summary output"></textarea>
+          <textarea
+            [(ngModel)]="summary"
+            rows="6"
+            placeholder="Summary output"
+            title="Summary output"
+          ></textarea>
         </div>
       </div>
     </div>
@@ -379,18 +523,20 @@
     <div class="medical-history-section fade-in" *ngIf="medicalHistory">
       <div class="card">
         <h2 class="section-title">Structured Medical Report</h2>
-        
+
         <!-- Brief Medical History -->
         <div class="medical-card">
           <h3 class="medical-card-title">
             <i class="material-icons">description</i> Brief Medical History
           </h3>
-          <textarea class="form-input" 
-                    [(ngModel)]="medicalHistory.brief_medical_history" 
-                    rows="3" 
-                    placeholder="No information available"></textarea>
+          <textarea
+            class="form-input"
+            [(ngModel)]="medicalHistory.brief_medical_history"
+            rows="3"
+            placeholder="No information available"
+          ></textarea>
         </div>
-        
+
         <!-- Chief Complaints -->
         <div class="medical-card">
           <h3 class="medical-card-title">
@@ -399,33 +545,56 @@
           <div class="medical-data-grid">
             <div class="medical-data-item">
               <div class="data-label">Complaint</div>
-              <input class="form-input" type="text" [(ngModel)]="medicalHistory.chief_complaints.Complaint" placeholder="None specified">
+              <input
+                class="form-input"
+                type="text"
+                [(ngModel)]="medicalHistory.chief_complaints.Complaint"
+                placeholder="None specified"
+              />
             </div>
-            
+
             <div class="medical-data-item">
               <div class="data-label">Duration</div>
-              <input class="form-input" type="text" [(ngModel)]="medicalHistory.chief_complaints.Duration" placeholder="None specified">
+              <input
+                class="form-input"
+                type="text"
+                [(ngModel)]="medicalHistory.chief_complaints.Duration"
+                placeholder="None specified"
+              />
             </div>
-            
-            <div class="medical-data-item" style="grid-column: 1 / -1;">
+
+            <div class="medical-data-item" style="grid-column: 1 / -1">
               <div class="data-label">Description</div>
-              <textarea class="form-input" [(ngModel)]="medicalHistory.chief_complaints.Description" placeholder="None specified" rows="3"></textarea>
+              <textarea
+                class="form-input"
+                [(ngModel)]="medicalHistory.chief_complaints.Description"
+                placeholder="None specified"
+                rows="3"
+              ></textarea>
             </div>
           </div>
         </div>
-        
+
         <!-- Current Symptoms -->
         <div class="medical-card">
           <h3 class="medical-card-title">
             <i class="material-icons">sick</i> Current Symptoms
           </h3>
           <div class="medical-data-item">
-            <div class="data-value" [class.empty]="!medicalHistory.current_symptoms_and_medical_background">
-              {{ medicalHistory.current_symptoms_and_medical_background || 'None specified' }}
+            <div
+              class="data-value"
+              [class.empty]="
+                !medicalHistory.current_symptoms_and_medical_background
+              "
+            >
+              {{
+                medicalHistory.current_symptoms_and_medical_background ||
+                  "None specified"
+              }}
             </div>
           </div>
         </div>
-        
+
         <!-- Past Medical History -->
         <div class="medical-card">
           <h3 class="medical-card-title">
@@ -434,148 +603,267 @@
           <div class="medical-data-grid">
             <div class="medical-data-item">
               <div class="data-label">Diagnosis Type</div>
-              <div class="data-value" [class.empty]="!medicalHistory.past_medical_history.Diagnosis_Type">
-                {{ medicalHistory.past_medical_history.Diagnosis_Type || 'None specified' }}
+              <div
+                class="data-value"
+                [class.empty]="
+                  !medicalHistory.past_medical_history.Diagnosis_Type
+                "
+              >
+                {{
+                  medicalHistory.past_medical_history.Diagnosis_Type ||
+                    "None specified"
+                }}
               </div>
             </div>
-            
+
             <div class="medical-data-item">
               <div class="data-label">Disease</div>
-              <div class="data-value" [class.empty]="!medicalHistory.past_medical_history.Disease">
-                {{ medicalHistory.past_medical_history.Disease || 'None specified' }}
+              <div
+                class="data-value"
+                [class.empty]="!medicalHistory.past_medical_history.Disease"
+              >
+                {{
+                  medicalHistory.past_medical_history.Disease ||
+                    "None specified"
+                }}
               </div>
             </div>
           </div>
         </div>
-        
+
         <!-- Collapsible Sections for Other Medical Data -->
         <div class="collapsible" [class.active]="hospitalActive">
-          <div class="collapsible-header" (click)="hospitalActive = !hospitalActive">
+          <div
+            class="collapsible-header"
+            (click)="hospitalActive = !hospitalActive"
+          >
             Hospitalization & Surgical History
           </div>
           <div class="collapsible-content">
             <div class="medical-data-grid">
               <div class="medical-data-item">
                 <div class="data-label">Diagnosis</div>
-                <div class="data-value" [class.empty]="!medicalHistory.hospitalization_and_surgical_history.Diagnosis">
-                  {{ medicalHistory.hospitalization_and_surgical_history.Diagnosis || 'None specified' }}
+                <div
+                  class="data-value"
+                  [class.empty]="
+                    !medicalHistory.hospitalization_and_surgical_history
+                      .Diagnosis
+                  "
+                >
+                  {{
+                    medicalHistory.hospitalization_and_surgical_history
+                      .Diagnosis || "None specified"
+                  }}
                 </div>
               </div>
-              
+
               <div class="medical-data-item">
                 <div class="data-label">Treatment</div>
-                <div class="data-value" [class.empty]="!medicalHistory.hospitalization_and_surgical_history.Treatment">
-                  {{ medicalHistory.hospitalization_and_surgical_history.Treatment || 'None specified' }}
+                <div
+                  class="data-value"
+                  [class.empty]="
+                    !medicalHistory.hospitalization_and_surgical_history
+                      .Treatment
+                  "
+                >
+                  {{
+                    medicalHistory.hospitalization_and_surgical_history
+                      .Treatment || "None specified"
+                  }}
                 </div>
               </div>
-              
+
               <div class="medical-data-item">
                 <div class="data-label">Admission Time</div>
-                <div class="data-value" [class.empty]="!medicalHistory.hospitalization_and_surgical_history.Admission_Time">
-                  {{ medicalHistory.hospitalization_and_surgical_history.Admission_Time || 'None specified' }}
+                <div
+                  class="data-value"
+                  [class.empty]="
+                    !medicalHistory.hospitalization_and_surgical_history
+                      .Admission_Time
+                  "
+                >
+                  {{
+                    medicalHistory.hospitalization_and_surgical_history
+                      .Admission_Time || "None specified"
+                  }}
                 </div>
               </div>
             </div>
           </div>
         </div>
-        
+
         <div class="collapsible" [class.active]="gynActive">
           <div class="collapsible-header" (click)="gynActive = !gynActive">
             Gynecological History
           </div>
           <div class="collapsible-content">
             <div class="medical-data-item">
-              <div class="data-value" [class.empty]="!medicalHistory.gynecological_history">
-                {{ medicalHistory.gynecological_history || 'None specified' }}
+              <div
+                class="data-value"
+                [class.empty]="!medicalHistory.gynecological_history"
+              >
+                {{ medicalHistory.gynecological_history || "None specified" }}
               </div>
             </div>
           </div>
         </div>
-        
+
         <div class="collapsible" [class.active]="lifestyleActive">
-          <div class="collapsible-header" (click)="lifestyleActive = !lifestyleActive">
+          <div
+            class="collapsible-header"
+            (click)="lifestyleActive = !lifestyleActive"
+          >
             Lifestyle & Social Activity
           </div>
           <div class="collapsible-content">
             <div class="medical-data-grid">
               <div class="medical-data-item">
                 <div class="data-label">Time</div>
-                <div class="data-value" [class.empty]="!medicalHistory.lifestyle_and_social_activity.Time">
-                  {{ medicalHistory.lifestyle_and_social_activity.Time || 'None specified' }}
+                <div
+                  class="data-value"
+                  [class.empty]="
+                    !medicalHistory.lifestyle_and_social_activity.Time
+                  "
+                >
+                  {{
+                    medicalHistory.lifestyle_and_social_activity.Time ||
+                      "None specified"
+                  }}
                 </div>
               </div>
-              
+
               <div class="medical-data-item">
                 <div class="data-label">Status</div>
-                <div class="data-value" [class.empty]="!medicalHistory.lifestyle_and_social_activity.Status">
-                  {{ medicalHistory.lifestyle_and_social_activity.Status || 'None specified' }}
+                <div
+                  class="data-value"
+                  [class.empty]="
+                    !medicalHistory.lifestyle_and_social_activity.Status
+                  "
+                >
+                  {{
+                    medicalHistory.lifestyle_and_social_activity.Status ||
+                      "None specified"
+                  }}
                 </div>
               </div>
             </div>
           </div>
         </div>
-        
+
         <div class="collapsible" [class.active]="familyActive">
-          <div class="collapsible-header" (click)="familyActive = !familyActive">
+          <div
+            class="collapsible-header"
+            (click)="familyActive = !familyActive"
+          >
             Family History
           </div>
           <div class="collapsible-content">
             <div class="medical-data-grid">
               <div class="medical-data-item">
                 <div class="data-label">Relation</div>
-                <div class="data-value" [class.empty]="!medicalHistory.family_history.Relation">
-                  {{ medicalHistory.family_history.Relation || 'None specified' }}
+                <div
+                  class="data-value"
+                  [class.empty]="!medicalHistory.family_history.Relation"
+                >
+                  {{
+                    medicalHistory.family_history.Relation || "None specified"
+                  }}
                 </div>
               </div>
-              
+
               <div class="medical-data-item">
                 <div class="data-label">Disease</div>
-                <div class="data-value" [class.empty]="!medicalHistory.family_history.Disease_Name">
-                  {{ medicalHistory.family_history.Disease_Name || 'None specified' }}
+                <div
+                  class="data-value"
+                  [class.empty]="!medicalHistory.family_history.Disease_Name"
+                >
+                  {{
+                    medicalHistory.family_history.Disease_Name ||
+                      "None specified"
+                  }}
                 </div>
               </div>
-              
+
               <div class="medical-data-item">
                 <div class="data-label">Age</div>
-                <div class="data-value" [class.empty]="!medicalHistory.family_history.Age">
-                  {{ medicalHistory.family_history.Age || 'Not available' }}
+                <div
+                  class="data-value"
+                  [class.empty]="!medicalHistory.family_history.Age"
+                >
+                  {{ medicalHistory.family_history.Age || "Not available" }}
                 </div>
               </div>
             </div>
           </div>
         </div>
-        
+
         <div class="collapsible" [class.active]="allergyActive">
-          <div class="collapsible-header" (click)="allergyActive = !allergyActive">
+          <div
+            class="collapsible-header"
+            (click)="allergyActive = !allergyActive"
+          >
             Allergies & Hypersensitivities
           </div>
           <div class="collapsible-content">
             <div class="medical-data-grid">
               <div class="medical-data-item">
                 <div class="data-label">Allergy</div>
-                <div class="data-value" [class.empty]="!medicalHistory.allergies_and_hypersensitivities.Allergy">
-                  {{ medicalHistory.allergies_and_hypersensitivities.Allergy || 'None specified' }}
+                <div
+                  class="data-value"
+                  [class.empty]="
+                    !medicalHistory.allergies_and_hypersensitivities.Allergy
+                  "
+                >
+                  {{
+                    medicalHistory.allergies_and_hypersensitivities.Allergy ||
+                      "None specified"
+                  }}
                 </div>
               </div>
-              
+
               <div class="medical-data-item">
                 <div class="data-label">Allergen</div>
-                <div class="data-value" [class.empty]="!medicalHistory.allergies_and_hypersensitivities.Allergen">
-                  {{ medicalHistory.allergies_and_hypersensitivities.Allergen || 'None specified' }}
+                <div
+                  class="data-value"
+                  [class.empty]="
+                    !medicalHistory.allergies_and_hypersensitivities.Allergen
+                  "
+                >
+                  {{
+                    medicalHistory.allergies_and_hypersensitivities.Allergen ||
+                      "None specified"
+                  }}
                 </div>
               </div>
-              
+
               <div class="medical-data-item">
                 <div class="data-label">Reaction Type</div>
-                <div class="data-value" [class.empty]="!medicalHistory.allergies_and_hypersensitivities.Type_of_Reaction">
-                  {{ medicalHistory.allergies_and_hypersensitivities.Type_of_Reaction || 'None specified' }}
+                <div
+                  class="data-value"
+                  [class.empty]="
+                    !medicalHistory.allergies_and_hypersensitivities
+                      .Type_of_Reaction
+                  "
+                >
+                  {{
+                    medicalHistory.allergies_and_hypersensitivities
+                      .Type_of_Reaction || "None specified"
+                  }}
                 </div>
               </div>
-              
+
               <div class="medical-data-item">
                 <div class="data-label">Severity</div>
-                <div class="data-value" [class.empty]="!medicalHistory.allergies_and_hypersensitivities.Severity">
-                  {{ medicalHistory.allergies_and_hypersensitivities.Severity || 'None specified' }}
+                <div
+                  class="data-value"
+                  [class.empty]="
+                    !medicalHistory.allergies_and_hypersensitivities.Severity
+                  "
+                >
+                  {{
+                    medicalHistory.allergies_and_hypersensitivities.Severity ||
+                      "None specified"
+                  }}
                 </div>
               </div>
             </div>
@@ -583,15 +871,21 @@
         </div>
       </div>
     </div>
-    
+
     <!-- Toast Notification Component -->
     <div class="toast-container">
       <div *ngFor="let toast of toasts" class="toast" [class]="toast.type">
         <div class="toast-icon">
           <i class="material-icons">
-            {{ toast.type === 'success' ? 'check_circle' : 
-               toast.type === 'error' ? 'error' : 
-               toast.type === 'warning' ? 'warning' : 'info' }}
+            {{
+              toast.type === "success"
+                ? "check_circle"
+                : toast.type === "error"
+                ? "error"
+                : toast.type === "warning"
+                ? "warning"
+                : "info"
+            }}
           </i>
         </div>
         <div class="toast-content">

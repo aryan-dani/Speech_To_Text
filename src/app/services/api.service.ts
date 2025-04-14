@@ -34,8 +34,5 @@ export class ApiService {
   }
 
   private uploadInChunks(file: File) {
-    // Chunked upload implementation
-    // This would split the file and send it in smaller pieces
-    // ...
   }
 }

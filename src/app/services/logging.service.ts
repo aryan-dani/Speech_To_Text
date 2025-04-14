@@ -4,16 +4,16 @@ export enum LogLevel {
   Debug = 0,
   Info = 1,
   Warn = 2,
-  Error = 3
+  Error = 3,
 }
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class LoggingService {
   private currentLogLevel: LogLevel = LogLevel.Info; // Default log level
 
-  constructor() { }
+  constructor() {}
 
   /**
    * Sets the current log level
@@ -96,23 +96,23 @@ export class LoggingService {
     if (!error) {
       return 'Unknown error occurred';
     }
-    
+
     if (typeof error === 'string') {
       return error;
     }
-    
+
     if (error instanceof Error) {
       return error.message;
     }
-    
+
     if (error.status && error.statusText) {
       return `HTTP Error: ${error.status} ${error.statusText}`;
     }
-    
+
     if (error.message) {
       return error.message;
     }
-    
+
     return JSON.stringify(error);
   }
 }

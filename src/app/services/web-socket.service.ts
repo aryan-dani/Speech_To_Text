@@ -6,11 +6,29 @@ import { LoggingService } from './logging.service';
 // Configuration constants from environment
 const BACKEND_CONFIG = environment.backend;
 
+// Helper function to construct base URLs with optional port
+const buildBaseUrl = (
+  protocol: string,
+  host: string,
+  port?: number
+): string => {
+  const portString = port ? `:${port}` : '';
+  return `${protocol}://${host}${portString}`;
+};
+
 // Define protocol variables - these will be updated in the constructor if needed
 let WS_PROTOCOL = BACKEND_CONFIG.useSecureWebSockets ? 'wss' : 'ws';
 let HTTP_PROTOCOL = BACKEND_CONFIG.useSecureWebSockets ? 'https' : 'http';
-let BACKEND_WS_BASE = `${WS_PROTOCOL}://${BACKEND_CONFIG.host}`;
-let BACKEND_HTTP_BASE = `${HTTP_PROTOCOL}://${BACKEND_CONFIG.host}`;
+let BACKEND_WS_BASE = buildBaseUrl(
+  WS_PROTOCOL,
+  BACKEND_CONFIG.host,
+  BACKEND_CONFIG.port
+);
+let BACKEND_HTTP_BASE = buildBaseUrl(
+  HTTP_PROTOCOL,
+  BACKEND_CONFIG.host,
+  BACKEND_CONFIG.port
+);
 
 // WebSocket error code descriptions for better error messages
 const WS_ERROR_CODES: Record<number, string> = {
@@ -79,22 +97,35 @@ export class WebSocketService {
     // Auto-detect protocol from current page URL and update configuration
     if (typeof window !== 'undefined') {
       const isSecure = window.location.protocol === 'https:';
-      this.logger.info(`Detected protocol: ${window.location.protocol}, using ${isSecure ? 'secure' : 'standard'} WebSockets`);
-      
+      this.logger.info(
+        `Detected protocol: ${window.location.protocol}, using ${
+          isSecure ? 'secure' : 'standard'
+        } WebSockets`
+      );
+
       // Update protocol settings based on current page protocol
       WS_PROTOCOL = isSecure ? 'wss' : 'ws';
       HTTP_PROTOCOL = isSecure ? 'https' : 'http';
-      BACKEND_WS_BASE = `${WS_PROTOCOL}://${BACKEND_CONFIG.host}`;
-      BACKEND_HTTP_BASE = `${HTTP_PROTOCOL}://${BACKEND_CONFIG.host}`;
+      // Rebuild base URLs with potentially updated protocol and existing port config
+      BACKEND_WS_BASE = buildBaseUrl(
+        WS_PROTOCOL,
+        BACKEND_CONFIG.host,
+        BACKEND_CONFIG.port
+      );
+      BACKEND_HTTP_BASE = buildBaseUrl(
+        HTTP_PROTOCOL,
+        BACKEND_CONFIG.host,
+        BACKEND_CONFIG.port
+      );
     }
-    
-    // Initialize endpoints with updated protocol
+
+    // Initialize endpoints with updated protocol and port
     this.endpoints = {
       transcribe: `${BACKEND_WS_BASE}/transcribe/`,
       summary: `${BACKEND_WS_BASE}/generate_summary/`,
-      ai: `${BACKEND_WS_BASE}/talk_with_ai/`,
+      ai: `${BACKEND_WS_BASE}/talk_with_ai/`, // This will now include the port
     };
-    
+
     // Initialize connections with updated endpoints
     this.connections = {
       transcribe: {
@@ -186,22 +217,31 @@ export class WebSocketService {
                 // Backend sends plain text for transcription
                 const timestamp = new Date().toISOString();
                 const currentTime = Date.now();
-                
+
                 // Deduplicate transcriptions received within the time window
                 if (
-                  event.data === this.lastTranscriptionReceived && 
-                  (currentTime - this.lastTranscriptionTime) < this.transcriptionDedupeWindow
+                  event.data === this.lastTranscriptionReceived &&
+                  currentTime - this.lastTranscriptionTime <
+                    this.transcriptionDedupeWindow
                 ) {
-                  this.logger.debug('Duplicate transcription received, ignoring', event.data);
-                  console.log(`[${timestamp}] Duplicate transcription detected and ignored`);
+                  this.logger.debug(
+                    'Duplicate transcription received, ignoring',
+                    event.data
+                  );
+                  console.log(
+                    `[${timestamp}] Duplicate transcription detected and ignored`
+                  );
                   return;
                 }
-                
+
                 // Store this transcription to detect duplicates
                 this.lastTranscriptionReceived = event.data;
                 this.lastTranscriptionTime = currentTime;
-                
-                console.log(`[${timestamp}] Transcription received from WebSocket:`, event.data);
+
+                console.log(
+                  `[${timestamp}] Transcription received from WebSocket:`,
+                  event.data
+                );
                 connection.subject.next(event.data);
               } else {
                 // For summary, parse JSON
@@ -234,17 +274,22 @@ export class WebSocketService {
           );
 
           // If we're using secure WebSocket (wss) and getting errors, try falling back to insecure (ws)
-          if (connection.url.startsWith('wss://') && connection.reconnectAttempts <= 1) {
-            this.logger.warn('Secure WebSocket connection failed. Trying fallback to standard WebSocket...');
+          if (
+            connection.url.startsWith('wss://') &&
+            connection.reconnectAttempts <= 1
+          ) {
+            this.logger.warn(
+              'Secure WebSocket connection failed. Trying fallback to standard WebSocket...'
+            );
             const fallbackUrl = connection.url.replace('wss://', 'ws://');
             connection.url = fallbackUrl;
-            
+
             // Close the current socket if it exists
             if (connection.socket) {
               connection.socket.close();
               connection.socket = null;
             }
-            
+
             // Try to connect with the fallback URL
             setTimeout(() => this.connectWebSocket(type), 1000);
             return;
@@ -273,24 +318,29 @@ export class WebSocketService {
             );
           } else {
             this.logger.warn(`${type} WebSocket connection died unexpectedly`);
-            
+
             // If we're using secure WebSocket (wss) and getting closed connections, try falling back to insecure (ws)
-            if (connection.url.startsWith('wss://') && connection.reconnectAttempts <= 1) {
-              this.logger.warn('Secure WebSocket connection closed. Trying fallback to standard WebSocket...');
+            if (
+              connection.url.startsWith('wss://') &&
+              connection.reconnectAttempts <= 1
+            ) {
+              this.logger.warn(
+                'Secure WebSocket connection closed. Trying fallback to standard WebSocket...'
+              );
               const fallbackUrl = connection.url.replace('wss://', 'ws://');
               connection.url = fallbackUrl;
-              
+
               // Close the current socket if it exists
               if (connection.socket) {
                 connection.socket.close();
                 connection.socket = null;
               }
-              
+
               // Try to connect with the fallback URL
               setTimeout(() => this.connectWebSocket(type), 1000);
               return;
             }
-            
+
             this.handleConnectionFailure(type, closeReason);
           }
         };
@@ -560,7 +610,10 @@ export class WebSocketService {
 
       try {
         this.logger.info('Creating AI WebSocket connection');
-        const socket = new WebSocket(this.endpoints.ai);
+        // Ensure the endpoint used here includes the port correctly
+        const aiEndpointUrl = this.endpoints.ai;
+        this.logger.debug(`Connecting to AI endpoint: ${aiEndpointUrl}`);
+        const socket = new WebSocket(aiEndpointUrl);
 
         // Set connection timeout
         connectionTimeout = window.setTimeout(() => {
@@ -657,6 +710,7 @@ export class WebSocketService {
 
   // Get HTTP base URL for other services
   public getHttpBaseUrl(): string {
+    // Ensure this also returns the URL with the port if configured
     return BACKEND_HTTP_BASE;
   }
 }

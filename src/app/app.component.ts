@@ -4,7 +4,7 @@ import {
   OnDestroy,
   HostListener,
   NgZone,
-  AfterViewInit
+  AfterViewInit,
 } from '@angular/core';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { FormsModule } from '@angular/forms';
@@ -29,11 +29,11 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
   private boundCheckScreenSize: any;
   clearSections: boolean = false;
   sidebarCollapsed: boolean = true; // Set to true to make sidebar collapsed by default
-  
+
   // Add missing properties
   isSidebarOpen: boolean = false;
   isAskAIEnabled: boolean = true;
-  
+
   title = 'medical-transcription-app';
   receivedMessages: string[] = [];
   transcription: string = '';
@@ -64,7 +64,7 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
   isDragging: boolean = false; // For drag and drop
   isUploading: boolean = false; // For upload progress
   uploadProgress: number = 0; // For upload progress bar
-  
+
   // Collapsible sections state
   hospitalActive: boolean = false;
   gynActive: boolean = false;
@@ -83,7 +83,7 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
       content:
         'Patient presents with symptoms of acute respiratory distress. History of asthma and seasonal allergies. Currently using albuterol inhaler as needed.',
       duration: '3:45',
-      type: 'Consultation'
+      type: 'Consultation',
     },
     {
       title: 'Sample 2',
@@ -91,7 +91,7 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
       content:
         'Follow-up appointment for diabetes management. Blood glucose levels have been stable. Patient reports compliance with medication regimen and dietary recommendations.',
       duration: '5:20',
-      type: 'Follow-up'
+      type: 'Follow-up',
     },
     {
       title: 'Sample 3',
@@ -99,7 +99,7 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
       content:
         'Post-operative evaluation following total knee replacement. Incision healing well with no signs of infection. Patient reports moderate pain controlled with prescribed medication.',
       duration: '4:15',
-      type: 'Post-op'
+      type: 'Post-op',
     },
   ];
   selectedSample: number | null = null;
@@ -128,7 +128,7 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
   visualFeedback = {
     recordingPulse: false,
     uploadSuccess: false,
-    aiThinking: false
+    aiThinking: false,
   };
 
   constructor(
@@ -164,10 +164,10 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
       this.boundCheckScreenSize = this.checkScreenSize.bind(this);
       window.addEventListener('resize', this.boundCheckScreenSize);
     }
-    
+
     // Initialize keyboard navigation
     this.initKeyboardNavigation();
-    
+
     // Enable keyboard navigation hints for first-time users
     setTimeout(() => {
       const askAIButton = document.querySelector('.ask-ai-button');
@@ -210,7 +210,7 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
     if (this.isRecording) {
       this.stopRecording();
     }
-    
+
     // Clean up any audio URLs to prevent memory leaks
     if (this.liveAudioUrl && typeof URL !== 'undefined') {
       URL.revokeObjectURL(this.liveAudioUrl);
@@ -247,7 +247,7 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
   navigateTo(section: string): void {
     if (this.activeSection !== section) {
       document.body.classList.add('section-transition');
-      
+
       // Reset all content with fade effect
       this.clearSections = true;
       this.summary = '';
@@ -261,24 +261,26 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
       this.isUploading = false;
       this.selectedSample = null;
       this.liveAudioUrl = '';
-      
+
       // Change section after transition
       setTimeout(() => {
         this.activeSection = section;
         this.clearSections = false;
         document.body.classList.remove('section-transition');
-        
+
         // Show contextual help for new sections
         this.helpService.showContextualHelp(`section-${section}`);
       }, 300);
-      
+
       // Always close sidebar when clicking an item
       this.sidebarActive = false;
       this.sidebarCollapsed = true;
-      
+
       // Add a small delay to ensure the sidebar closing animation is smooth
       setTimeout(() => {
-        const overlay = document.querySelector('.sidebar-overlay') as HTMLElement;
+        const overlay = document.querySelector(
+          '.sidebar-overlay'
+        ) as HTMLElement;
         if (overlay) {
           overlay.style.opacity = '0';
           overlay.style.visibility = 'hidden';
@@ -288,31 +290,36 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   // Toast notification methods with improved functionality
-  showToast(type: string, title: string, message: string, duration: number = 5000): void {
+  showToast(
+    type: string,
+    title: string,
+    message: string,
+    duration: number = 5000
+  ): void {
     const toast = {
       id: new Date().getTime(),
       type,
       title,
       message,
       progress: 100,
-      removing: false
+      removing: false,
     };
-    
+
     this.zone.run(() => {
       this.toasts.unshift(toast);
-      
+
       // Auto-remove toast after duration
       setTimeout(() => {
         this.removeToast(toast.id);
       }, duration);
-      
+
       // Update progress bar
       const interval = setInterval(() => {
         if (toast.removing) {
           clearInterval(interval);
           return;
         }
-        
+
         toast.progress -= 100 / (duration / 100);
         if (toast.progress <= 0) {
           clearInterval(interval);
@@ -320,17 +327,17 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
       }, 100);
     });
   }
-  
+
   removeToast(id: number): void {
-    const toastIndex = this.toasts.findIndex(t => t.id === id);
+    const toastIndex = this.toasts.findIndex((t) => t.id === id);
     if (toastIndex > -1) {
       // Mark as removing to start the animation
       this.toasts[toastIndex].removing = true;
-      
+
       // Remove after animation completes
       setTimeout(() => {
         this.zone.run(() => {
-          this.toasts = this.toasts.filter(toast => toast.id !== id);
+          this.toasts = this.toasts.filter((toast) => toast.id !== id);
         });
       }, 300); // Match animation duration
     }
@@ -339,15 +346,15 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
   // Visualization for audio recording - replaced with real-time visualization
   getRandomHeight(index: number): number {
     if (!this.isRecording) return 10;
-    
+
     // Generate more realistic audio visualization
     const baseHeight = 20;
     const maxVar = 60;
     const time = Date.now() / 200;
     const sinVal = Math.sin(time + index * 0.4);
     const cosVal = Math.cos(time * 0.7 + index * 0.3);
-    
-    return baseHeight + (sinVal + cosVal) * maxVar / 2;
+
+    return baseHeight + ((sinVal + cosVal) * maxVar) / 2;
   }
 
   // Get the height for a visualization bar based on actual audio data
@@ -355,14 +362,14 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
     if (!this.isRecording || !this.visualizationDataArray) {
       return 10; // Default minimal height when not recording
     }
-    
+
     // Map the frequency data to the bar index
     const dataLength = this.visualizationDataArray.length;
     const barIndex = Math.floor((index / this.BAR_COUNT) * dataLength);
-    
+
     // Get the value from the frequency data array
     const value = this.visualizationDataArray[barIndex] || 0;
-    
+
     // Scale the value to a percentage (0-100)
     return 10 + (value / 255) * 90; // 10% minimum height, max 100%
   }
@@ -371,7 +378,12 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
   loadSample(index: number): void {
     this.selectedSample = index;
     this.transcription = this.sampleTranscriptions[index].content;
-    this.showToast('success', 'Sample Loaded', `Sample ${index + 1} has been loaded.`, 3000);
+    this.showToast(
+      'success',
+      'Sample Loaded',
+      `Sample ${index + 1} has been loaded.`,
+      3000
+    );
   }
 
   // Drag and drop file handling
@@ -380,24 +392,24 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
     event.stopPropagation();
     this.isDragging = true;
   }
-  
+
   onDragLeave(event: DragEvent): void {
     event.preventDefault();
     event.stopPropagation();
     this.isDragging = false;
   }
-  
+
   onDrop(event: DragEvent): void {
     event.preventDefault();
     event.stopPropagation();
     this.isDragging = false;
-    
+
     if (event.dataTransfer?.files.length) {
       const file = event.dataTransfer.files[0];
       if (file.type.startsWith('audio/') || file.type === 'video/mp4') {
         this.selectedFile = file;
         this.selectedFileName = file.name;
-        
+
         // Create URL for selected file so it can be played
         if (this.uploadedFileUrl) {
           URL.revokeObjectURL(this.uploadedFileUrl);
@@ -405,10 +417,20 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
         if (this.selectedFile) {
           this.uploadedFileUrl = URL.createObjectURL(this.selectedFile);
         }
-        
-        this.showToast('success', 'File Added', `${file.name} has been added.`, 3000);
+
+        this.showToast(
+          'success',
+          'File Added',
+          `${file.name} has been added.`,
+          3000
+        );
       } else {
-        this.showToast('error', 'Invalid File', 'Please upload an audio or MP4 video file.', 5000);
+        this.showToast(
+          'error',
+          'Invalid File',
+          'Please upload an audio or MP4 video file.',
+          5000
+        );
       }
     }
   }
@@ -416,7 +438,12 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
   // Audio playback methods
   playAudio(): void {
     if (!this.liveAudioUrl) {
-      this.showToast('error', 'No Audio', 'No audio file available for playback', 3000);
+      this.showToast(
+        'error',
+        'No Audio',
+        'No audio file available for playback',
+        3000
+      );
       return;
     }
 
@@ -445,7 +472,12 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
 
     this.audioElement.play().catch((error) => {
       console.error('Error playing audio:', error);
-      this.showToast('error', 'Playback Error', 'Could not play the audio file.', 5000);
+      this.showToast(
+        'error',
+        'Playback Error',
+        'Could not play the audio file.',
+        5000
+      );
     });
   }
 
@@ -475,14 +507,19 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
     // Show loading state
     this.summary = 'Generating summary...';
     this.processingTranscription = true;
-    
+
     // Important: Don't clear the medical history when regenerating summary
     // This ensures hospitalization/surgical history buttons remain visible
     // This ensures hospitalization/surgical history buttons remain visible
     // this.medicalHistory = null; // Removing this line
-    
+
     // Show a more attractive toast for generating summary
-    this.showToast('primary', 'Generating Summary', 'Creating medical summary from transcription...', 5000);
+    this.showToast(
+      'primary',
+      'Generating Summary',
+      'Creating medical summary from transcription...',
+      5000
+    );
 
     // Get the appropriate transcription based on the active section
     let currentTranscription = this.transcription;
@@ -499,7 +536,12 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
     if (!currentTranscription || currentTranscription.trim() === '') {
       this.summary = 'Error: No transcription available to summarize.';
       this.processingTranscription = false;
-      this.showToast('error', 'No Content', 'No transcription available to summarize.', 5000);
+      this.showToast(
+        'error',
+        'No Content',
+        'No transcription available to summarize.',
+        5000
+      );
       return;
     }
 
@@ -527,7 +569,12 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
               // Create a readable summary from the structured data
               this.summary =
                 'Summary generated successfully. See structured data below.';
-              this.showToast('success', 'Summary Generated', 'Your medical report has been created successfully.', 5000);
+              this.showToast(
+                'success',
+                'Summary Generated',
+                'Your medical report has been created successfully.',
+                5000
+              );
             } else if (typeof data === 'string') {
               // If it's a string, use it directly
               this.summary = data;
@@ -536,20 +583,40 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
               try {
                 const jsonData = JSON.parse(data);
                 this.medicalHistory = jsonData;
-                this.showToast('success', 'Summary Generated', 'Your medical report has been created successfully.', 5000);
+                this.showToast(
+                  'success',
+                  'Summary Generated',
+                  'Your medical report has been created successfully.',
+                  5000
+                );
               } catch (e) {
                 // Not JSON, just use as text
                 console.log('Response is not JSON, using as plain text');
-                this.showToast('success', 'Summary Generated', 'Your text summary has been created.', 5000);
+                this.showToast(
+                  'success',
+                  'Summary Generated',
+                  'Your text summary has been created.',
+                  5000
+                );
               }
             } else {
               this.summary = 'Received response in unknown format';
-              this.showToast('warning', 'Unusual Response', 'The server returned data in an unexpected format.', 5000);
+              this.showToast(
+                'warning',
+                'Unusual Response',
+                'The server returned data in an unexpected format.',
+                5000
+              );
             }
           } catch (error) {
             console.error('Error processing summary:', error);
             this.summary = 'Error processing summary response';
-            this.showToast('error', 'Processing Error', 'Could not process the summary response.', 5000);
+            this.showToast(
+              'error',
+              'Processing Error',
+              'Could not process the summary response.',
+              5000
+            );
           }
 
           this.modelResponse = 'Model response received';
@@ -558,15 +625,20 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
           console.error('WebSocket error:', err);
           this.summary = 'Error: Could not generate summary. Please try again.';
           this.processingTranscription = false;
-          this.showToast('error', 'Connection Error', 'Could not generate summary. Please try again.', 5000);
-        }
+          this.showToast(
+            'error',
+            'Connection Error',
+            'Could not generate summary. Please try again.',
+            5000
+          );
+        },
       });
   }
 
   // Toggle Ask AI form visibility with improved scrolling
   toggleAskAI(): void {
     this.showAskAIForm = !this.showAskAIForm;
-    
+
     // Reset the query and response when closing
     if (!this.showAskAIForm) {
       this.query = '';
@@ -574,7 +646,9 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
     } else {
       // When opening, add a slight delay to ensure the element is rendered before scrolling
       setTimeout(() => {
-        const aiResponseContainer = document.querySelector('.ai-response-container');
+        const aiResponseContainer = document.querySelector(
+          '.ai-response-container'
+        );
         if (aiResponseContainer) {
           // Add visible class to ensure it's displayed
           aiResponseContainer.classList.add('visible');
@@ -582,19 +656,24 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
         }
       }, 100);
     }
-    
+
     // Make sure any AI response container gets the visible class
     setTimeout(() => {
-      document.querySelectorAll('.ai-response-container').forEach(container => {
-        if (this.showAskAIForm) {
-          container.classList.add('visible');
-        } else {
-          container.classList.remove('visible');
-        }
-      });
+      document
+        .querySelectorAll('.ai-response-container')
+        .forEach((container) => {
+          if (this.showAskAIForm) {
+            container.classList.add('visible');
+          } else {
+            container.classList.remove('visible');
+          }
+        });
     }, 50);
-    
-    console.log('Ask AI form toggled:', this.showAskAIForm ? 'visible' : 'hidden');
+
+    console.log(
+      'Ask AI form toggled:',
+      this.showAskAIForm ? 'visible' : 'hidden'
+    );
   }
 
   // Improved method to scroll to any element
@@ -605,11 +684,12 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
         // Use a more reliable scrolling method
         element.scrollIntoView({
           behavior: 'smooth',
-          block: 'start'
+          block: 'start',
         });
-        
+
         // Also add a focus outline temporarily to draw attention
-        const focusableElement = element.querySelector('input, textarea, button') || element;
+        const focusableElement =
+          element.querySelector('input, textarea, button') || element;
         if (focusableElement instanceof HTMLElement) {
           focusableElement.focus();
           // Add highlight class temporarily
@@ -632,14 +712,19 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
     }
 
     if (!this.query?.trim()) {
-      this.showToast('error', 'Empty Question', 'Please enter a question to ask.', 3000);
+      this.showToast(
+        'error',
+        'Empty Question',
+        'Please enter a question to ask.',
+        3000
+      );
       return;
     }
 
     this.loadingService.show();
     this.visualFeedback.aiThinking = true;
     this.llamaResponse = 'AI is thinking...';
-    
+
     // Store last query for retry purposes
     this.lastAction = this.query;
 
@@ -666,17 +751,27 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
     }
 
     if (!this.query || this.query.trim() === '') {
-      this.llamaResponse = 'Error: Please enter a question to ask.'; 
+      this.llamaResponse = 'Error: Please enter a question to ask.';
       this.processingTranscription = false;
-      this.showToast('error', 'Empty Question', 'Please enter a question to ask.', 3000);
+      this.showToast(
+        'error',
+        'Empty Question',
+        'Please enter a question to ask.',
+        3000
+      );
       return;
     }
 
     // Scroll to AI response container
     setTimeout(() => {
-      const responseContainer = document.querySelector('.ai-response-container');
+      const responseContainer = document.querySelector(
+        '.ai-response-container'
+      );
       if (responseContainer) {
-        responseContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        responseContainer.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center',
+        });
       }
     }, 100);
 
@@ -690,7 +785,12 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
         if (response.startsWith('Error:')) {
           // If it's an error message
           this.llamaResponse = response;
-          this.showToast('error', 'AI Error', 'The AI service returned an error.', 5000);
+          this.showToast(
+            'error',
+            'AI Error',
+            'The AI service returned an error.',
+            5000
+          );
         } else {
           try {
             // Try to parse as JSON if it looks like JSON
@@ -701,21 +801,41 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
               try {
                 const jsonData = JSON.parse(response);
                 this.llamaResponse = JSON.stringify(jsonData, null, 2);
-                this.showToast('success', 'Response Received', 'The AI has answered your question.', 3000);
+                this.showToast(
+                  'success',
+                  'Response Received',
+                  'The AI has answered your question.',
+                  3000
+                );
               } catch (e) {
                 // Not valid JSON, use as is
                 this.llamaResponse = response;
-                this.showToast('success', 'Response Received', 'The AI has answered your question.', 3000);
+                this.showToast(
+                  'success',
+                  'Response Received',
+                  'The AI has answered your question.',
+                  3000
+                );
               }
             } else {
               // Plain text response
               this.llamaResponse = response;
-              this.showToast('success', 'Response Received', 'The AI has answered your question.', 3000);
+              this.showToast(
+                'success',
+                'Response Received',
+                'The AI has answered your question.',
+                3000
+              );
             }
           } catch (error) {
             console.error('Error processing Llama response:', error);
             this.llamaResponse = response || 'Error processing response';
-            this.showToast('warning', 'Processing Issue', 'There was an issue processing the AI response.', 5000);
+            this.showToast(
+              'warning',
+              'Processing Issue',
+              'There was an issue processing the AI response.',
+              5000
+            );
           }
         }
       })
@@ -725,7 +845,12 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
           err.message || 'Error communicating with AI service'
         }`;
         this.processingTranscription = false;
-        this.showToast('error', 'Connection Error', 'Could not connect to the AI service.', 5000);
+        this.showToast(
+          'error',
+          'Connection Error',
+          'Could not connect to the AI service.',
+          5000
+        );
       });
   }
 
@@ -735,7 +860,7 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
       this.selectedFile = event.target.files[0];
       this.selectedFileName = this.selectedFile ? this.selectedFile.name : '';
       console.log('File selected:', this.selectedFileName);
-      
+
       // Create URL for selected file so it can be played
       if (this.uploadedFileUrl) {
         URL.revokeObjectURL(this.uploadedFileUrl);
@@ -743,8 +868,13 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
       if (this.selectedFile) {
         this.uploadedFileUrl = URL.createObjectURL(this.selectedFile);
       }
-      
-      this.showToast('info', 'File Selected', `${this.selectedFileName} ready for upload.`, 3000);
+
+      this.showToast(
+        'info',
+        'File Selected',
+        `${this.selectedFileName} ready for upload.`,
+        3000
+      );
     } else {
       this.selectedFile = null;
       this.selectedFileName = '';
@@ -755,27 +885,39 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
   // Enhanced file upload with progress and retry
   uploadAudio(): void {
     if (!this.selectedFile) {
-      this.showToast('error', 'Upload Error', 'No file selected for upload.', 3000);
+      this.showToast(
+        'error',
+        'Upload Error',
+        'No file selected for upload.',
+        3000
+      );
       return;
     }
 
     this.loadingService.show();
     this.isUploading = true;
     this.uploadProgress = 0;
-    this.showToast('info', 'Upload Started', 'Uploading and transcribing your audio...', 3000);
+    this.showToast(
+      'info',
+      'Upload Started',
+      'Uploading and transcribing your audio...',
+      3000
+    );
 
     const upload = () => {
       const formData = new FormData();
       formData.append('file', this.selectedFile!);
 
       const uploadUrl = `${this.wsService.getHttpBaseUrl()}/upload/`;
-      
+
       // Create upload observer with progress tracking
       const xhr = new XMLHttpRequest();
       xhr.upload.onprogress = (event) => {
         if (event.lengthComputable) {
           this.zone.run(() => {
-            this.uploadProgress = Math.round((event.loaded / event.total) * 100);
+            this.uploadProgress = Math.round(
+              (event.loaded / event.total) * 100
+            );
           });
         }
       };
@@ -809,18 +951,28 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
     this.isUploading = false;
     this.uploadProgress = 100;
     this.visualFeedback.uploadSuccess = true;
-    
+
     setTimeout(() => {
       this.visualFeedback.uploadSuccess = false;
-      
+
       if (response && response.transcription) {
         this.uploadedTranscription = response.transcription;
-        
+
         if (this.uploadedTranscription.trim() === '') {
           this.uploadedTranscription = 'No speech detected in the audio file.';
-          this.showToast('warning', 'No Speech Detected', 'No speech could be detected in the audio file.', 5000);
+          this.showToast(
+            'warning',
+            'No Speech Detected',
+            'No speech could be detected in the audio file.',
+            5000
+          );
         } else {
-          this.showToast('success', 'Transcription Complete', 'Your audio has been transcribed successfully.', 3000);
+          this.showToast(
+            'success',
+            'Transcription Complete',
+            'Your audio has been transcribed successfully.',
+            3000
+          );
           this.transcription = this.uploadedTranscription;
         }
       }
@@ -830,7 +982,12 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
   private handleUploadError(error: string): void {
     if (this.retryCount < this.RETRY_ATTEMPTS) {
       this.retryCount++;
-      this.showToast('warning', 'Upload Failed', `Retrying upload (${this.retryCount}/${this.RETRY_ATTEMPTS})...`, 3000);
+      this.showToast(
+        'warning',
+        'Upload Failed',
+        `Retrying upload (${this.retryCount}/${this.RETRY_ATTEMPTS})...`,
+        3000
+      );
       setTimeout(() => this.uploadAudio(), 1000);
       return;
     }
@@ -838,7 +995,12 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
     this.loadingService.hide();
     this.isUploading = false;
     this.uploadedTranscription = `Error: Upload failed after ${this.RETRY_ATTEMPTS} attempts`;
-    this.showToast('error', 'Upload Failed', 'Could not upload the audio file after multiple attempts.', 5000);
+    this.showToast(
+      'error',
+      'Upload Failed',
+      'Could not upload the audio file after multiple attempts.',
+      5000
+    );
     this.retryCount = 0;
   }
 
@@ -852,7 +1014,7 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
     if (!this.isRecording) {
       this.loadingService.show();
       this.visualFeedback.recordingPulse = true;
-      
+
       this.transcription = 'Preparing to record...';
       this.showToast('info', 'Recording Setup', 'Preparing to record...', 3000);
 
@@ -890,7 +1052,12 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
                   if (this.isRecording) {
                     this.transcription +=
                       '\n[Transcription error: Connection to server was lost. Still recording...]';
-                      this.showToast('warning', 'Connection Issue', 'Transcription connection lost, but still recording.', 5000);
+                    this.showToast(
+                      'warning',
+                      'Connection Issue',
+                      'Transcription connection lost, but still recording.',
+                      5000
+                    );
                   }
                 }),
               complete: () =>
@@ -906,40 +1073,49 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
           audio: true,
         });
         this.source = this.audioContext.createMediaStreamSource(stream);
-        
+
         // Create analyzer node for real-time visualization
         this.audioAnalyser = this.audioContext.createAnalyser();
         this.audioAnalyser.fftSize = 256;
         this.audioAnalyser.smoothingTimeConstant = 0.8;
-        this.visualizationDataArray = new Uint8Array(this.audioAnalyser.frequencyBinCount);
-        
+        this.visualizationDataArray = new Uint8Array(
+          this.audioAnalyser.frequencyBinCount
+        );
+
         // Connect the source to the analyzer
         this.source.connect(this.audioAnalyser);
-        
+
         // Start visualization animation
         this.startVisualization();
-        
+
         // Use AudioWorkletNode instead of deprecated ScriptProcessorNode when supported
         if (this.audioContext.audioWorklet) {
           // Modern approach (replace with AudioWorkletNode implementation)
           // For now, fallback to ScriptProcessorNode
           // First, dynamically load the audio worklet processor
-          await this.audioContext.audioWorklet.addModule('assets/recorderWorkletProcessor.js');
+          await this.audioContext.audioWorklet.addModule(
+            'assets/recorderWorkletProcessor.js'
+          );
 
           // Create the AudioWorkletNode instance
-          this.scriptNode = new AudioWorkletNode(this.audioContext, 'recorder-processor');
+          this.scriptNode = new AudioWorkletNode(
+            this.audioContext,
+            'recorder-processor'
+          );
 
           // Clear any previously recorded chunks when starting a new recording
           this.recordedChunks = [];
 
           // Set up message handler to receive processed audio data from the worklet
-          this.scriptNode.port.onmessage = (event: MessageEvent<{eventType: string; audioBuffer: ArrayBuffer}>) => {
+          this.scriptNode.port.onmessage = (
+            event: MessageEvent<{ eventType: string; audioBuffer: ArrayBuffer }>
+          ) => {
             if (event.data.eventType === 'audio') {
               const pcmData = new Int16Array(event.data.audioBuffer);
-              
+
               // Store a copy of the recorded chunk for local playback
               this.recordedChunks.push(new Int16Array(pcmData));
-              
+
               // Send to WebSocket for transcription
               this.wsService.sendAudioData(pcmData.buffer);
             }
@@ -949,8 +1125,6 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
           this.source!.connect(this.scriptNode);
           // Connect to destination to keep the audio processing active
           this.scriptNode.connect(this.audioContext!.destination);
-
-         
         } else {
           // Fallback for browsers that don't support AudioWorkletNode
           this.useScriptProcessorNode();
@@ -958,26 +1132,42 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
 
         this.isRecording = true;
         this.transcription = 'Recording... Speak now';
-        this.showToast('success', 'Recording Started', 'Speak clearly into your microphone.', 3000);
-        console.log('Recording started with real-time transcription and visualization');
-        
+        this.showToast(
+          'success',
+          'Recording Started',
+          'Speak clearly into your microphone.',
+          3000
+        );
+        console.log(
+          'Recording started with real-time transcription and visualization'
+        );
+
         // Show contextual help for first recording
         this.helpService.showContextualHelp('first-recording');
-        
       } catch (err) {
         console.error('Error accessing microphone', err);
-        
+
         if (this.retryCount < this.RETRY_ATTEMPTS) {
           this.retryCount++;
-          this.showToast('warning', 'Retrying', `Attempting to access microphone (${this.retryCount}/${this.RETRY_ATTEMPTS})...`, 3000);
+          this.showToast(
+            'warning',
+            'Retrying',
+            `Attempting to access microphone (${this.retryCount}/${this.RETRY_ATTEMPTS})...`,
+            3000
+          );
           setTimeout(() => this.toggleRecording(), 1000);
           return;
         }
-        
+
         this.transcription = `Microphone access error: ${
           err instanceof Error ? err.message : 'Could not access microphone'
         }`;
-        this.showToast('error', 'Microphone Error', 'Could not access your microphone. Please check your permissions.', 5000);
+        this.showToast(
+          'error',
+          'Microphone Error',
+          'Could not access your microphone. Please check your permissions.',
+          5000
+        );
       } finally {
         this.loadingService.hide();
       }
@@ -985,7 +1175,12 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
       // Stopping recording
       this.visualFeedback.recordingPulse = false;
       this.stopRecording();
-      this.showToast('info', 'Recording Stopped', 'Processing your audio...', 3000);
+      this.showToast(
+        'info',
+        'Recording Stopped',
+        'Processing your audio...',
+        3000
+      );
     }
   }
 
@@ -994,18 +1189,24 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
     // Create an AudioWorkletNode when available (modern approach), otherwise fallback to ScriptProcessorNode
     if (this.audioContext && 'audioWorklet' in this.audioContext) {
       // Modern approach is implemented in toggleRecording method
-      console.log('AudioWorklet is supported, should be using that instead of ScriptProcessorNode');
+      console.log(
+        'AudioWorklet is supported, should be using that instead of ScriptProcessorNode'
+      );
       return;
     }
-    
+
     // DEPRECATION WARNING: ScriptProcessorNode is deprecated.
     // This is a fallback for browsers that don't support AudioWorkletNode
     console.warn('WARNING: Using deprecated ScriptProcessorNode as a fallback');
-    
+
     // Using a larger buffer size to reduce performance impact
     const bufferSize = 2048; // Increased from 1024 for better performance
-    this.scriptNode = this.audioContext!.createScriptProcessor(bufferSize, 1, 1);
-    
+    this.scriptNode = this.audioContext!.createScriptProcessor(
+      bufferSize,
+      1,
+      1
+    );
+
     // Clear any previously recorded chunks when starting a new recording
     this.recordedChunks = [];
 
@@ -1031,7 +1232,7 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
   private stopRecording(): void {
     // Stop the visualization animation
     this.stopVisualization();
-    
+
     if (this.source) {
       this.source.disconnect();
       this.source = null;
@@ -1053,20 +1254,25 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
       this.processingTranscription = true;
       this.createAudioFromChunks();
       this.processingTranscription = false;
-      this.showToast('success', 'Recording Processed', 'Your audio has been processed successfully.', 3000);
+      this.showToast(
+        'success',
+        'Recording Processed',
+        'Your audio has been processed successfully.',
+        3000
+      );
     }
 
     this.isRecording = false;
     console.log('Recording stopped');
   }
-  
+
   /** Start real-time audio visualization */
   private startVisualization(): void {
     if (!this.visualizationAnimationFrame) {
       this.updateVisualization();
     }
   }
-  
+
   /** Stop real-time audio visualization */
   private stopVisualization(): void {
     if (this.visualizationAnimationFrame) {
@@ -1074,21 +1280,23 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
       this.visualizationAnimationFrame = null;
     }
   }
-  
+
   /** Update the audio visualization based on real-time audio data */
   private updateVisualization(): void {
     if (!this.audioAnalyser || !this.visualizationDataArray) {
       this.visualizationAnimationFrame = null;
       return;
     }
-    
+
     // Get frequency data from the analyzer
     this.audioAnalyser.getByteFrequencyData(this.visualizationDataArray);
-    
+
     // Request the next animation frame
-    this.visualizationAnimationFrame = requestAnimationFrame(() => this.updateVisualization());
+    this.visualizationAnimationFrame = requestAnimationFrame(() =>
+      this.updateVisualization()
+    );
   }
-  
+
   /** Creates an audio blob from recorded chunks and sets the audio URL */
   private createAudioFromChunks(): void {
     try {
@@ -1123,7 +1331,12 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
       console.log('Audio URL created:', this.liveAudioUrl);
     } catch (error) {
       console.error('Error creating audio from chunks:', error);
-      this.showToast('error', 'Audio Processing Error', 'Could not process the recorded audio.', 5000);
+      this.showToast(
+        'error',
+        'Audio Processing Error',
+        'Could not process the recorded audio.',
+        5000
+      );
     }
   }
 
@@ -1189,71 +1402,79 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
   // Handle keyboard navigation for sidebar
   initKeyboardNavigation() {
     console.log('Initializing enhanced keyboard navigation...');
-    
+
     if (typeof window !== 'undefined') {
-      window.addEventListener('keydown', (event: KeyboardEvent) => {
-        console.log('Key pressed:', event.key);
-        
-        // ESC key to toggle sidebar
-        if (event.key === 'Escape') {
-          this.toggleSidebar();
-          console.log('Escape pressed, toggling sidebar');
-          event.preventDefault();
-          event.stopPropagation();
-        }
-        
-        // Add keyboard shortcut for Ask AI (Alt+A)
-        if (event.key === 'a' && event.altKey) {
-          console.log('Alt+A pressed, toggling Ask AI');
-          this.toggleAskAI();
-          event.preventDefault();
-        }
-        
-        // Add keyboard shortcut for toggling recording (Alt+R)
-        if (event.key === 'r' && event.altKey) {
-          console.log('Alt+R pressed, toggling recording');
-          this.toggleRecording();
-          event.preventDefault();
-        }
-        
-        // Navigation between menu items with Shift+Arrow
-        if (event.shiftKey) {
-          const sections = ['live', 'file', 'samples'];
-          const currentIndex = sections.indexOf(this.activeSection);
-          
-          if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
-            // Navigate to next section
-            if (currentIndex < sections.length - 1) {
-              const nextSection = sections[currentIndex + 1];
-              this.navigateTo(nextSection);
-              console.log(`Shift+${event.key} pressed, navigating to: ${nextSection}`);
-              event.preventDefault();
-            }
-          } else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
-            // Navigate to previous section
-            if (currentIndex > 0) {
-              const prevSection = sections[currentIndex - 1];
-              this.navigateTo(prevSection);
-              console.log(`Shift+${event.key} pressed, navigating to: ${prevSection}`);
-              event.preventDefault();
+      window.addEventListener(
+        'keydown',
+        (event: KeyboardEvent) => {
+          console.log('Key pressed:', event.key);
+
+          // ESC key to toggle sidebar
+          if (event.key === 'Escape') {
+            this.toggleSidebar();
+            console.log('Escape pressed, toggling sidebar');
+            event.preventDefault();
+            event.stopPropagation();
+          }
+
+          // Add keyboard shortcut for Ask AI (Alt+A)
+          if (event.key === 'a' && event.altKey) {
+            console.log('Alt+A pressed, toggling Ask AI');
+            this.toggleAskAI();
+            event.preventDefault();
+          }
+
+          // Add keyboard shortcut for toggling recording (Alt+R)
+          if (event.key === 'r' && event.altKey) {
+            console.log('Alt+R pressed, toggling recording');
+            this.toggleRecording();
+            event.preventDefault();
+          }
+
+          // Navigation between menu items with Shift+Arrow
+          if (event.shiftKey) {
+            const sections = ['live', 'file', 'samples'];
+            const currentIndex = sections.indexOf(this.activeSection);
+
+            if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
+              // Navigate to next section
+              if (currentIndex < sections.length - 1) {
+                const nextSection = sections[currentIndex + 1];
+                this.navigateTo(nextSection);
+                console.log(
+                  `Shift+${event.key} pressed, navigating to: ${nextSection}`
+                );
+                event.preventDefault();
+              }
+            } else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
+              // Navigate to previous section
+              if (currentIndex > 0) {
+                const prevSection = sections[currentIndex - 1];
+                this.navigateTo(prevSection);
+                console.log(
+                  `Shift+${event.key} pressed, navigating to: ${prevSection}`
+                );
+                event.preventDefault();
+              }
             }
           }
-        }
-      }, true); // Added true for capture phase to ensure our handler runs first
+        },
+        true
+      ); // Added true for capture phase to ensure our handler runs first
     }
-    
+
     // Enable Ask AI button regardless of other conditions
     this.enableIndependentAskAI();
-    
+
     // Force focus outlines for keyboard users
     document.addEventListener('keydown', () => {
       document.body.classList.add('keyboard-user');
     });
-    
+
     document.addEventListener('mousedown', () => {
       document.body.classList.remove('keyboard-user');
     });
-    
+
     console.log('Enhanced keyboard navigation initialized');
   }
 
@@ -1261,18 +1482,20 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
   enableIndependentAskAI() {
     // Remove any conditions that disable the Ask AI button
     this.isAskAIEnabled = true;
-    
+
     // If this method is called after view init, we need to manually update the button
     setTimeout(() => {
-      const askAIButtons = document.querySelectorAll('.ask-ai-button') as NodeListOf<HTMLButtonElement>;
+      const askAIButtons = document.querySelectorAll(
+        '.ask-ai-button'
+      ) as NodeListOf<HTMLButtonElement>;
       if (askAIButtons.length > 0) {
         console.log('Found Ask AI buttons, enabling independently');
-        
-        askAIButtons.forEach(askAIButton => {
+
+        askAIButtons.forEach((askAIButton) => {
           // Make sure the button is enabled
           askAIButton.disabled = false;
           askAIButton.removeAttribute('disabled');
-          
+
           // Add stronger click handler
           const clickHandler = () => {
             console.log('Ask AI button clicked from TypeScript handler');
@@ -1280,32 +1503,41 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
             setTimeout(() => {
               askAIButton.classList.remove('feedback-click');
             }, 300);
-            
+
             // Toggle the Ask AI form
             this.zone.run(() => {
               this.toggleAskAI();
             });
-            
+
             // If there's no text in the transcription, provide a helpful message
             if (!this.transcription || this.transcription.trim() === '') {
-              this.showToast('info', 'No Transcription', 'No transcription available. You can still ask general medical questions.', 3000);
+              this.showToast(
+                'info',
+                'No Transcription',
+                'No transcription available. You can still ask general medical questions.',
+                3000
+              );
             }
           };
-          
+
           // Remove existing listeners to avoid duplicates
           const newElement = askAIButton.cloneNode(true) as HTMLButtonElement;
           askAIButton.parentNode?.replaceChild(newElement, askAIButton);
-          
+
           // Use capture to ensure our handler runs
           newElement.addEventListener('click', clickHandler, true);
-          
+
           // Ensure keyboard activation works
-          newElement.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-              e.preventDefault();
-              clickHandler();
-            }
-          }, true);
+          newElement.addEventListener(
+            'keydown',
+            (e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                clickHandler();
+              }
+            },
+            true
+          );
         });
       }
     }, 500);
@@ -1314,18 +1546,23 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
   // Add method to ensure keyboard interactivity for all cards
   ensureCardKeyboardAccessibility() {
     setTimeout(() => {
-      const cards = document.querySelectorAll('.card, .sample-item, .medical-card');
-      cards.forEach(card => {
+      const cards = document.querySelectorAll(
+        '.card, .sample-item, .medical-card'
+      );
+      cards.forEach((card) => {
         if (!card.hasAttribute('tabindex')) {
           card.setAttribute('tabindex', '0');
         }
-        
-        (card as HTMLElement).addEventListener('keydown', (e: KeyboardEvent) => {
-          if (e.key === 'Enter') {
-            e.preventDefault();
-            (card as HTMLElement).click();
+
+        (card as HTMLElement).addEventListener(
+          'keydown',
+          (e: KeyboardEvent) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              (card as HTMLElement).click();
+            }
           }
-        });
+        );
       });
     }, 1000);
   }
@@ -1346,7 +1583,7 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
       if (event.shiftKey) {
         const sections = ['live', 'file', 'samples'];
         const currentIndex = sections.indexOf(this.activeSection);
-        
+
         switch (event.key) {
           case 'ArrowRight':
           case 'ArrowDown':
@@ -1355,7 +1592,7 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
               this.navigateTo(sections[currentIndex + 1]);
             }
             break;
-          
+
           case 'ArrowLeft':
           case 'ArrowUp':
             if (currentIndex > 0) {
@@ -1382,7 +1619,7 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
 
   private showTutorial(): void {
     let currentStep = 0;
-    
+
     const showNextStep = () => {
       if (currentStep < this.helpSteps.length) {
         const step = this.helpSteps[currentStep];
@@ -1395,12 +1632,12 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
         setTimeout(showNextStep, 5000);
       } else {
         // Remove highlights
-        document.querySelectorAll('.highlight-tutorial').forEach(el => {
+        document.querySelectorAll('.highlight-tutorial').forEach((el) => {
           el.classList.remove('highlight-tutorial');
         });
       }
     };
-    
+
     showNextStep();
   }
 }

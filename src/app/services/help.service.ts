@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class HelpService {
   private hasSeenTutorial = false;
@@ -16,20 +16,22 @@ export class HelpService {
         {
           target: '.recording-section',
           content: 'Start by recording your voice or uploading an audio file',
-          position: 'bottom'
+          position: 'bottom',
         },
         {
           target: '.ask-ai-button',
-          content: 'Use AI to analyze your transcriptions or ask medical questions (Alt + A)',
-          position: 'left'
+          content:
+            'Use AI to analyze your transcriptions or ask medical questions (Alt + A)',
+          position: 'left',
         },
         {
           target: '.shortcuts-section',
-          content: 'Use keyboard shortcuts for quick navigation (Shift + Arrow keys)',
-          position: 'right'
-        }
+          content:
+            'Use keyboard shortcuts for quick navigation (Shift + Arrow keys)',
+          position: 'right',
+        },
       ];
-      
+
       this.helpVisibleSubject.next(true);
       this.hasSeenTutorial = true;
       return steps;
