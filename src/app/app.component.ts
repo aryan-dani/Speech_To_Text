@@ -581,17 +581,40 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
         this.selectedFile = file;
         this.selectedFileName = sample.fileName;
 
+        // Show loading indicator for better user experience
+        this.processingTranscription = true;
+        this.showToast(
+          'info',
+          'Loading Sample',
+          'Processing audio file...',
+          3000
+        );
+
         // Create URL for selected file so it can be played
         if (this.uploadedFileUrl) {
           URL.revokeObjectURL(this.uploadedFileUrl);
         }
-        this.uploadedFileUrl = URL.createObjectURL(file);
+        this.uploadedFileUrl = URL.createObjectURL(file); // Display the content immediately while processing the audio
+        this.transcription = sample.content;
+
+        // Create a container element to hold the transcription display
+        const transcriptionDisplay = document.querySelector(
+          '.transcription-area textarea'
+        );
+        if (transcriptionDisplay) {
+          // Add a visual highlight effect to show the transcription is loaded
+          transcriptionDisplay.classList.add('highlight-new');
+          setTimeout(() => {
+            transcriptionDisplay.classList.remove('highlight-new');
+          }, 1500);
+        }
 
         // Process the file through the existing upload mechanism
         this.uploadAudio();
       })
       .catch((error) => {
         console.error('Error loading sample audio:', error);
+        this.processingTranscription = false;
         this.showToast(
           'error',
           'Loading Error',
@@ -1099,8 +1122,7 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
       this.uploadedFileUrl = '';
     }
   }
-
-  // Enhanced file upload with progress and retry
+  // Enhanced file upload with clear progress feedback and retry
   uploadAudio(): void {
     if (!this.selectedFile) {
       this.showToast(
@@ -1112,15 +1134,33 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
       return;
     }
 
+    // Clear any previous transcription to avoid confusion
+    this.uploadedTranscription = '';
+    this.transcription = '';
+
+    // Show loading indicators
     this.loadingService.show();
     this.isUploading = true;
+    this.processingTranscription = true;
     this.uploadProgress = 0;
+
     this.showToast(
       'info',
       'Upload Started',
       'Uploading and transcribing your audio...',
       3000
     );
+
+    // Make transcription area show processing state
+    const transcriptionArea = document.querySelector(
+      '.transcription-area textarea'
+    );
+    if (transcriptionArea) {
+      transcriptionArea.setAttribute(
+        'placeholder',
+        'Processing your audio file...'
+      );
+    }
 
     const upload = () => {
       const formData = new FormData();
@@ -1136,6 +1176,23 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
             this.uploadProgress = Math.round(
               (event.loaded / event.total) * 100
             );
+
+            // Update status message based on progress
+            if (this.uploadProgress < 100) {
+              if (transcriptionArea) {
+                transcriptionArea.setAttribute(
+                  'placeholder',
+                  `Uploading: ${this.uploadProgress}% complete...`
+                );
+              }
+            } else {
+              if (transcriptionArea) {
+                transcriptionArea.setAttribute(
+                  'placeholder',
+                  'Transcribing audio... This may take a moment.'
+                );
+              }
+            }
           });
         }
       };
@@ -1163,11 +1220,11 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
 
     upload();
   }
-
   private handleUploadSuccess(response: any): void {
     this.loadingService.hide();
     this.isUploading = false;
     this.uploadProgress = 100;
+    this.processingTranscription = false;
     this.visualFeedback.uploadSuccess = true;
 
     setTimeout(() => {
@@ -1175,6 +1232,28 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
 
       if (response && response.transcription) {
         this.uploadedTranscription = response.transcription;
+
+        // Scroll to the transcription area to make it visible
+        setTimeout(() => {
+          const transcriptionArea = document.querySelector(
+            '.transcription-area'
+          );
+          if (transcriptionArea) {
+            transcriptionArea.scrollIntoView({
+              behavior: 'smooth',
+              block: 'center',
+            });
+
+            // Add a highlight effect to draw attention to the result
+            const textarea = transcriptionArea.querySelector('textarea');
+            if (textarea) {
+              textarea.classList.add('highlight-new');
+              setTimeout(() => {
+                textarea.classList.remove('highlight-new');
+              }, 1500);
+            }
+          }
+        }, 100);
 
         if (this.uploadedTranscription.trim() === '') {
           this.uploadedTranscription = 'No speech detected in the audio file.';
@@ -1196,8 +1275,22 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
       }
     }, 500);
   }
-
   private handleUploadError(error: string): void {
+    // Reset placeholder in transcription area
+    const transcriptionArea = document.querySelector(
+      '.transcription-area textarea'
+    );
+    if (transcriptionArea) {
+      transcriptionArea.setAttribute(
+        'placeholder',
+        'Error processing file. Please try again.'
+      );
+      transcriptionArea.classList.add('error');
+      setTimeout(() => {
+        transcriptionArea.classList.remove('error');
+      }, 2000);
+    }
+
     if (this.retryCount < this.RETRY_ATTEMPTS) {
       this.retryCount++;
       this.showToast(
@@ -1212,13 +1305,20 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
 
     this.loadingService.hide();
     this.isUploading = false;
-    this.uploadedTranscription = `Error: Upload failed after ${this.RETRY_ATTEMPTS} attempts`;
+    this.processingTranscription = false;
+    this.uploadedTranscription = `Error: Upload failed after ${this.RETRY_ATTEMPTS} attempts. Please try again or choose a different file.`;
+
     this.showToast(
       'error',
       'Upload Failed',
       'Could not upload the audio file after multiple attempts.',
       5000
     );
+    // Show error message in transcription area
+    if (transcriptionArea instanceof HTMLTextAreaElement) {
+      transcriptionArea.value = this.uploadedTranscription;
+    }
+
     this.retryCount = 0;
   }
 
