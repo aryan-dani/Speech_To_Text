@@ -565,22 +565,31 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
   selectSample(index: number): void {
     this.selectedSample = index;
     const sample = this.sampleTranscriptions[index];
-    this.showToast('info', 'Sample Selected', `Selected ${sample.title}`, 3000);
+    this.showToast('info', 'Sample Selected', `Selected ${sample.title}`, 2000); // Shorter duration
 
     // Set the transcription content right away
     this.transcription = sample.content;
 
-    // Create a container element to hold the transcription display
-    const transcriptionDisplay = document.querySelector(
-      '.transcription-area textarea'
-    );
-    if (transcriptionDisplay) {
-      // Add a visual highlight effect to show the transcription is loaded
-      transcriptionDisplay.classList.add('highlight-new');
+    // Use NgZone to ensure Angular updates the view before scrolling
+    this.zone.runOutsideAngular(() => {
       setTimeout(() => {
-        transcriptionDisplay.classList.remove('highlight-new');
-      }, 1500);
-    }
+        this.zone.run(() => {
+          // Scroll to the transcription area smoothly
+          this.scrollToElement('.transcription-area', 'start');
+
+          // Highlight the transcription text area briefly
+          const transcriptionDisplay = document.querySelector(
+            '.transcription-area textarea'
+          ) as HTMLTextAreaElement;
+          if (transcriptionDisplay) {
+            transcriptionDisplay.classList.add('highlight-new');
+            setTimeout(() => {
+              transcriptionDisplay.classList.remove('highlight-new');
+            }, 1500); // Keep highlight for 1.5 seconds
+          }
+        });
+      }, 100); // Small delay to allow rendering
+    });
 
     // Only load the media if it's an audio/video sample but don't translate
     if (this.isMediaSample(sample)) {
@@ -590,6 +599,11 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
       // Clear any previous audio/video
       this.selectedFile = null;
       this.uploadedFileUrl = '';
+      // Ensure player is hidden if it's a text sample
+      const playerElement = document.querySelector('.audio-player');
+      if (playerElement) {
+        playerElement.classList.remove('visible');
+      }
     }
   }
 
@@ -1032,27 +1046,30 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   // Improved method to scroll to any element
-  scrollToElement(selector: string): void {
+  scrollToElement(
+    selector: string,
+    blockPosition: ScrollLogicalPosition = 'center'
+  ): void {
     try {
       const element = document.querySelector(selector);
       if (element) {
         // Use a more reliable scrolling method
         element.scrollIntoView({
           behavior: 'smooth',
-          block: 'start',
+          block: blockPosition, // Use provided block position ('start', 'center', 'end')
         });
 
-        // Also add a focus outline temporarily to draw attention
-        const focusableElement =
-          element.querySelector('input, textarea, button') || element;
-        if (focusableElement instanceof HTMLElement) {
-          focusableElement.focus();
-          // Add highlight class temporarily
-          focusableElement.classList.add('focus-highlight');
-          setTimeout(() => {
-            focusableElement.classList.remove('focus-highlight');
-          }, 2000); // Remove after 2 seconds
-        }
+        // Optional: Add focus outline temporarily (if applicable)
+        // const focusableElement =
+        //   element.querySelector('input, textarea, button') || element;
+        // if (focusableElement instanceof HTMLElement) {
+        //   focusableElement.classList.add('highlight-scroll-target');
+        //   setTimeout(() => {
+        //     focusableElement.classList.remove('highlight-scroll-target');
+        //   }, 1500);
+        // }
+      } else {
+        console.warn(`Scroll target element not found: ${selector}`);
       }
     } catch (error) {
       console.error('Error scrolling to element:', error);

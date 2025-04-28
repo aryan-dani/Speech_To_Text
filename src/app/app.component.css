@@ -2736,7 +2736,6 @@ select:focus,
   background-color: var(--background-light);
   border-radius: 3px;
   margin-top: 15px;
-  overflow: hidden;
 }
 
 .upload-progress-bar {
@@ -3434,4 +3433,12 @@ input:checked + .toggle-slider:before {
 .medical-card:hover {
   transform: translateY(-5px);
   box-shadow: 0 15px 35px rgba(33, 37, 41, 0.12);
+}
+
+/* Style for highlighting the scroll target */
+.highlight-scroll-target {
+  background-color: rgba(67, 97, 238, 0.1); /* Subtle highlight */
+  border-radius: var(--border-radius); /* Match border radius */
+  box-shadow: 0 0 0 2px rgba(67, 97, 238, 0.3); /* Add a subtle ring */
+  transition: background-color 0.3s ease-out, box-shadow 0.3s ease-out; /* Smooth transition for highlight */
 }
