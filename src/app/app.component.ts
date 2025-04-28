@@ -561,17 +561,41 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
 
     // Scale the value to a percentage (0-100)
     return 10 + (value / 255) * 90; // 10% minimum height, max 100%
-  }
-  // Sample methods
-  loadSample(index: number): void {
+  } // Sample methods
+  selectSample(index: number): void {
     this.selectedSample = index;
     const sample = this.sampleTranscriptions[index];
-    this.showToast(
-      'info',
-      'Loading Sample',
-      `Loading ${sample.title}...`,
-      3000
+    this.showToast('info', 'Sample Selected', `Selected ${sample.title}`, 3000);
+
+    // Set the transcription content right away
+    this.transcription = sample.content;
+
+    // Create a container element to hold the transcription display
+    const transcriptionDisplay = document.querySelector(
+      '.transcription-area textarea'
     );
+    if (transcriptionDisplay) {
+      // Add a visual highlight effect to show the transcription is loaded
+      transcriptionDisplay.classList.add('highlight-new');
+      setTimeout(() => {
+        transcriptionDisplay.classList.remove('highlight-new');
+      }, 1500);
+    }
+
+    // Only load the media if it's an audio/video sample but don't translate
+    if (this.isMediaSample(sample)) {
+      // Load the media file
+      this.loadSampleMedia(index);
+    } else {
+      // Clear any previous audio/video
+      this.selectedFile = null;
+      this.uploadedFileUrl = '';
+    }
+  }
+
+  // Load sample media (audio or video) without automatic translation
+  loadSampleMedia(index: number): void {
+    const sample = this.sampleTranscriptions[index];
 
     fetch(sample.filePath)
       .then((response) => response.blob())
@@ -581,50 +605,140 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
         this.selectedFile = file;
         this.selectedFileName = sample.fileName;
 
-        // Show loading indicator for better user experience
-        this.processingTranscription = true;
-        this.showToast(
-          'info',
-          'Loading Sample',
-          'Processing audio file...',
-          3000
-        );
-
         // Create URL for selected file so it can be played
         if (this.uploadedFileUrl) {
           URL.revokeObjectURL(this.uploadedFileUrl);
         }
-        this.uploadedFileUrl = URL.createObjectURL(file); // Display the content immediately while processing the audio
-        this.transcription = sample.content;
-
-        // Create a container element to hold the transcription display
-        const transcriptionDisplay = document.querySelector(
-          '.transcription-area textarea'
-        );
-        if (transcriptionDisplay) {
-          // Add a visual highlight effect to show the transcription is loaded
-          transcriptionDisplay.classList.add('highlight-new');
-          setTimeout(() => {
-            transcriptionDisplay.classList.remove('highlight-new');
-          }, 1500);
-        }
-
-        // Process the file through the existing upload mechanism
-        this.uploadAudio();
+        this.uploadedFileUrl = URL.createObjectURL(file);
       })
       .catch((error) => {
-        console.error('Error loading sample audio:', error);
-        this.processingTranscription = false;
+        console.error('Error loading sample media:', error);
         this.showToast(
           'error',
           'Loading Error',
-          'Could not load sample audio.',
+          'Could not load sample media file.',
           5000
         );
 
-        // Fall back to just showing the transcription if audio loading fails
-        this.transcription = sample.content;
+        // Clear file references
+        this.selectedFile = null;
+        this.uploadedFileUrl = '';
       });
+  }
+
+  // Determine if a sample has audio/video media
+  isMediaSample(sample: any): boolean {
+    const audioExtensions = ['.mp3', '.ogg', '.wav', '.aac', '.m4a', '.flac'];
+    const videoExtensions = ['.mp4', '.webm', '.mpeg', '.mov'];
+    const fileName = sample.fileName.toLowerCase();
+
+    return (
+      audioExtensions.some((ext) => fileName.endsWith(ext)) ||
+      videoExtensions.some((ext) => fileName.endsWith(ext))
+    );
+  }
+
+  // Play a sample directly from the list
+  playSample(index: number, event: Event): void {
+    event.stopPropagation(); // Prevent the click from selecting the sample
+
+    // First ensure the sample is selected
+    if (this.selectedSample !== index) {
+      this.selectSample(index);
+    }
+
+    // Then load and play the media
+    const sample = this.sampleTranscriptions[index];
+    if (this.isMediaSample(sample)) {
+      this.loadSampleMedia(index);
+
+      // Play the media after a short delay to ensure it's loaded
+      setTimeout(() => {
+        const audioElement = document.querySelector(
+          '.audio-player audio'
+        ) as HTMLAudioElement;
+        const videoElement = document.querySelector(
+          '.audio-player video'
+        ) as HTMLVideoElement;
+
+        if (audioElement && !sample.fileName.includes('mp4')) {
+          audioElement.play();
+        } else if (videoElement && sample.fileName.includes('mp4')) {
+          videoElement.play();
+        }
+      }, 500);
+    }
+  }
+
+  // Translate the selected sample (separate action from selection)
+  translateSelectedSample(): void {
+    if (this.selectedSample === null) {
+      this.showToast(
+        'error',
+        'No Sample Selected',
+        'Please select a sample first.',
+        3000
+      );
+      return;
+    }
+
+    const sample = this.sampleTranscriptions[this.selectedSample];
+    this.showToast(
+      'info',
+      'Processing Sample',
+      `Processing ${sample.title}...`,
+      3000
+    );
+
+    // Show loading indicator for better user experience
+    this.processingTranscription = true;
+
+    // If we already loaded the file, use that, otherwise load it now
+    if (!this.selectedFile && this.isMediaSample(sample)) {
+      fetch(sample.filePath)
+        .then((response) => response.blob())
+        .then((blob) => {
+          const file = new File([blob], sample.fileName, { type: blob.type });
+          this.selectedFile = file;
+          this.selectedFileName = sample.fileName;
+
+          if (this.uploadedFileUrl) {
+            URL.revokeObjectURL(this.uploadedFileUrl);
+          }
+          this.uploadedFileUrl = URL.createObjectURL(file);
+
+          // Process the file through the existing upload mechanism
+          this.uploadAudio();
+        })
+        .catch((error) => {
+          console.error('Error loading sample for translation:', error);
+          this.processingTranscription = false;
+          this.showToast(
+            'error',
+            'Loading Error',
+            'Could not load sample for translation.',
+            5000
+          );
+        });
+    } else if (this.isMediaSample(sample)) {
+      // Process the already loaded file
+      this.uploadAudio();
+    } else {
+      // Text-only sample, no need for processing
+      this.showToast(
+        'info',
+        'Text Sample',
+        'This is a text-only sample that does not require translation.',
+        3000
+      );
+      this.processingTranscription = false;
+    }
+  }
+
+  // Original loadSample method (kept for backward compatibility if needed)
+  loadSample(index: number): void {
+    this.selectSample(index);
+    this.translateSelectedSample();
   }
 
   // Drag and drop file handling

@@ -388,21 +388,34 @@
         <p class="section-description">
           Browse through pre-loaded sample transcriptions
         </p>
-
         <!-- Enhanced Samples List -->
         <div class="samples-list">
           <div
             class="sample-item"
             *ngFor="let sample of sampleTranscriptions; let i = index"
-            (click)="loadSample(i)"
+            [class.active]="selectedSample === i"
+            (click)="selectSample(i)"
             tabindex="0"
-            (keydown.enter)="loadSample(i)"
+            (keydown.enter)="selectSample(i)"
           >
-            <h3>Sample {{ i + 1 }}</h3>
+            <div class="sample-header">
+              <h3>{{ sample.title }}</h3>
+              <div class="sample-actions" *ngIf="isMediaSample(sample)">
+                <button class="play-button" (click)="playSample(i, $event)">
+                  <i class="material-icons">play_arrow</i>
+                </button>
+              </div>
+            </div>
             <p>{{ sample.preview }}</p>
             <div class="sample-meta">
               <span
-                ><i class="material-icons">schedule</i
+                ><i class="material-icons">{{
+                  isMediaSample(sample)
+                    ? sample.fileName.includes("mp4")
+                      ? "videocam"
+                      : "headphones"
+                    : "description"
+                }}</i
                 >{{ sample.duration || "2:34" }}</span
               >
               <span
@@ -434,6 +447,14 @@
         <div class="control-buttons">
           <button
             class="action-button magic-button"
+            (click)="translateSelectedSample()"
+            [disabled]="selectedSample === null"
+          >
+            <i class="material-icons">translate</i> Translate Sample
+          </button>
+
+          <button
+            class="action-button magic-button"
             (click)="generateSummaryWS()"
             [disabled]="selectedSample === null"
           >
@@ -447,6 +468,30 @@
           >
             <i class="material-icons">psychology</i> Ask AI
           </button>
+        </div>
+
+        <!-- Audio Player for Samples -->
+        <div
+          class="audio-player"
+          *ngIf="selectedFile && selectedSample !== null"
+        >
+          <h4>
+            <i class="material-icons">{{
+              selectedFile.type.includes("video") ? "videocam" : "headphones"
+            }}</i>
+            Sample Media
+          </h4>
+          <audio
+            *ngIf="selectedFile && !selectedFile.type.includes('video')"
+            [src]="uploadedFileUrl"
+            controls
+          ></audio>
+          <video
+            *ngIf="selectedFile && selectedFile.type.includes('video')"
+            [src]="uploadedFileUrl"
+            controls
+            width="100%"
+          ></video>
         </div>
 
         <!-- AI Response Container -->

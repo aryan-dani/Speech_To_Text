@@ -291,7 +291,7 @@
   font-size: 1rem;
 }
 
-/* Enhanced Control Buttons with Better Visibility */
+/* Improved Control Buttons with Better Visibility */
 .control-buttons {
   display: flex;
   flex-wrap: wrap;
@@ -1205,22 +1205,38 @@ textarea[readonly] {
   transition: opacity 0.3s ease;
 }
 
-.sample-item:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+.sample-item:hover::before,
+.sample-item.active::before {
+  opacity: 1;
 }
 
-.sample-item:hover::before {
-  opacity: 1;
+.sample-item:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(67, 97, 238, 0.15);
+}
+
+.sample-item.active {
+  box-shadow: 0 8px 20px rgba(67, 97, 238, 0.15);
+  transform: translateY(-3px);
+  background-color: rgba(67, 97, 238, 0.03);
+  border-color: rgba(67, 97, 238, 0.1);
+}
+
+.sample-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  position: relative;
 }
 
 .sample-item h3 {
   font-size: 18px;
-  margin-bottom: 15px;
   color: var(--text-color);
   font-weight: 600;
   position: relative;
   padding-bottom: 12px;
+  margin-bottom: 0;
 }
 
 .sample-item h3::after {
@@ -1232,6 +1248,37 @@ textarea[readonly] {
   height: 3px;
   background: var(--primary-color);
   border-radius: 3px;
+}
+
+.sample-actions {
+  display: flex;
+}
+
+.play-button {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--gradient-primary);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  box-shadow: 0 4px 10px rgba(67, 97, 238, 0.3);
+  transition: all 0.3s ease;
+  margin-left: 10px;
+  border: none;
+  cursor: pointer;
+}
+
+.play-button:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 15px rgba(67, 97, 238, 0.4);
+}
+
+.play-button i {
+  font-size: 20px;
+  margin-right: 0;
 }
 
 .sample-item p {
@@ -2346,7 +2393,7 @@ select:focus,
 
 .toast:hover {
   transform: translateY(-3px) !important;
-  box-shadow: 0 12px 30px rgba(33, 37, 41, 0.2);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
 }
 
 .toast-icon {
@@ -2802,19 +2849,6 @@ input:checked + .toggle-slider:before {
   font-weight: 500;
 }
 
-@media (max-width: 576px) {
-  .transcription-options {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .option-group {
-    width: 100%;
-  }
-}
-
-/* Add these professional animation enhancements to the end of the file */
-
 /* ===== ENHANCED PROFESSIONAL ANIMATIONS ===== */
 @keyframes gentle-float {
   0%,
@@ -3146,7 +3180,7 @@ button:active::after {
   top: 0;
   left: 0;
   width: 4px;
-  height: 0;
+  height: 100%;
   background: var(--gradient-primary);
   transition: height 0.4s ease;
 }
