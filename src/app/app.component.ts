@@ -74,32 +74,219 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
 
   // Toast notification properties
   toasts: any[] = [];
-
-  // Sample transcriptions
+  // Sample transcriptions with original text content but updated file info
   sampleTranscriptions: any[] = [
     {
       title: 'Sample 1',
       preview: 'Patient presents with symptoms of...',
       content:
         'Patient presents with symptoms of acute respiratory distress. History of asthma and seasonal allergies. Currently using albuterol inhaler as needed.',
-      duration: '3:45',
+      duration: 'Loading...',
       type: 'Consultation',
+      fileName: '1.ogg',
+      filePath: 'assets/Doctor_patient_communication/1.ogg',
     },
     {
       title: 'Sample 2',
       preview: 'Follow-up appointment for diabetes management...',
       content:
         'Follow-up appointment for diabetes management. Blood glucose levels have been stable. Patient reports compliance with medication regimen and dietary recommendations.',
-      duration: '5:20',
+      duration: 'Loading...',
       type: 'Follow-up',
+      fileName: '2.mp4',
+      filePath: 'assets/Doctor_patient_communication/2.mp4',
     },
     {
       title: 'Sample 3',
       preview: 'Post-operative evaluation following...',
       content:
         'Post-operative evaluation following total knee replacement. Incision healing well with no signs of infection. Patient reports moderate pain controlled with prescribed medication.',
-      duration: '4:15',
+      duration: 'Loading...',
       type: 'Post-op',
+      fileName: '3.aac',
+      filePath: 'assets/Doctor_patient_communication/3.aac',
+    },
+    {
+      title: 'Sample 4',
+      preview: 'Discussion of recent lab results...',
+      content:
+        'Discussion of recent lab results for cholesterol panel. LDL elevated, recommending lifestyle modifications and follow-up testing in three months.',
+      duration: 'Loading...',
+      type: 'Lab Review',
+      fileName: '4.aac',
+      filePath: 'assets/Doctor_patient_communication/4.aac',
+    },
+    {
+      title: 'Sample 5',
+      preview: 'Initial consultation for chronic pain...',
+      content:
+        'Initial consultation for chronic lower back pain. Patient reports pain radiating to left leg. Discussing conservative management options and imaging recommendations.',
+      duration: 'Loading...',
+      type: 'Initial Consult',
+      fileName: '5.mp4',
+      filePath: 'assets/Doctor_patient_communication/5.mp4',
+    },
+    {
+      title: 'Sample 6',
+      preview: 'Audio consultation sample...',
+      content: 'Medical consultation audio.',
+      duration: 'Loading...',
+      type: 'Audio Sample',
+      fileName: '6.aac',
+      filePath: 'assets/Doctor_patient_communication/6.aac',
+    },
+    {
+      title: 'Sample 7',
+      preview: 'Medical recording example...',
+      content: 'Medical recording example.',
+      duration: 'Loading...',
+      type: 'Recording',
+      fileName: '7.mp4',
+      filePath: 'assets/Doctor_patient_communication/7.mp4',
+    },
+    {
+      title: 'Sample 8',
+      preview: 'Patient-doctor conversation...',
+      content: 'Patient-doctor conversation.',
+      duration: 'Loading...',
+      type: 'Conversation',
+      fileName: '8.mp4',
+      filePath: 'assets/Doctor_patient_communication/8.mp4',
+    },
+    {
+      title: 'Sample 9',
+      preview: 'Medical consultation recording...',
+      content: 'Medical consultation recording.',
+      duration: 'Loading...',
+      type: 'Consultation',
+      fileName: '9.mp4',
+      filePath: 'assets/Doctor_patient_communication/9.mp4',
+    },
+    {
+      title: 'Sample 10',
+      preview: 'Audio sample example...',
+      content: 'Audio sample example.',
+      duration: 'Loading...',
+      type: 'Audio Sample',
+      fileName: '10.ogg',
+      filePath: 'assets/Doctor_patient_communication/10.ogg',
+    },
+    {
+      title: 'Sample 11',
+      preview: 'Medical video recording...',
+      content: 'Medical video recording.',
+      duration: 'Loading...',
+      type: 'Video',
+      fileName: '11.mp4',
+      filePath: 'assets/Doctor_patient_communication/11.mp4',
+    },
+    {
+      title: 'Sample 12',
+      preview: 'Patient interview example...',
+      content: 'Patient interview example.',
+      duration: 'Loading...',
+      type: 'Interview',
+      fileName: '12.mp4',
+      filePath: 'assets/Doctor_patient_communication/12.mp4',
+    },
+    {
+      title: 'Sample 13',
+      preview: 'Doctor-patient interaction...',
+      content: 'Doctor-patient interaction.',
+      duration: 'Loading...',
+      type: 'Interaction',
+      fileName: '13.mp4',
+      filePath: 'assets/Doctor_patient_communication/13.mp4',
+    },
+    {
+      title: 'Sample 14',
+      preview: 'Medical consultation video...',
+      content: 'Medical consultation video.',
+      duration: 'Loading...',
+      type: 'Consultation',
+      fileName: '14.mp4',
+      filePath: 'assets/Doctor_patient_communication/14.mp4',
+    },
+    {
+      title: 'Sample 15',
+      preview: 'Clinical conversation example...',
+      content: 'Clinical conversation example.',
+      duration: 'Loading...',
+      type: 'Conversation',
+      fileName: '15.mp4',
+      filePath: 'assets/Doctor_patient_communication/15.mp4',
+    },
+    {
+      title: 'Sample 16',
+      preview: 'Medical assessment recording...',
+      content: 'Medical assessment recording.',
+      duration: 'Loading...',
+      type: 'Assessment',
+      fileName: '16.mp4',
+      filePath: 'assets/Doctor_patient_communication/16.mp4',
+    },
+    {
+      title: 'Sample 17',
+      preview: 'Patient evaluation audio...',
+      content: 'Patient evaluation audio.',
+      duration: 'Loading...',
+      type: 'Evaluation',
+      fileName: '17.wav',
+      filePath: 'assets/Doctor_patient_communication/17.wav',
+    },
+    {
+      title: 'Sample 18',
+      preview: 'Medical discussion sample...',
+      content: 'Medical discussion sample.',
+      duration: 'Loading...',
+      type: 'Discussion',
+      fileName: '18.ogg',
+      filePath: 'assets/Doctor_patient_communication/18.ogg',
+    },
+    {
+      title: 'Sample 19',
+      preview: 'Clinical interview recording...',
+      content: 'Clinical interview recording.',
+      duration: 'Loading...',
+      type: 'Interview',
+      fileName: '19.mp4',
+      filePath: 'assets/Doctor_patient_communication/19.mp4',
+    },
+    {
+      title: 'Sample 20',
+      preview: 'Medical consultation example...',
+      content: 'Medical consultation example.',
+      duration: 'Loading...',
+      type: 'Consultation',
+      fileName: '20.mp4',
+      filePath: 'assets/Doctor_patient_communication/20.mp4',
+    },
+    {
+      title: 'Sample 21',
+      preview: 'Patient history audio...',
+      content: 'Patient history audio.',
+      duration: 'Loading...',
+      type: 'History',
+      fileName: '21.aac',
+      filePath: 'assets/Doctor_patient_communication/21.aac',
+    },
+    {
+      title: 'Sample 22',
+      preview: 'Clinical examination video...',
+      content: 'Clinical examination video.',
+      duration: 'Loading...',
+      type: 'Examination',
+      fileName: '22.mp4',
+      filePath: 'assets/Doctor_patient_communication/22.mp4',
+    },
+    {
+      title: 'Sample 23',
+      preview: 'Medical recording sample...',
+      content: 'Medical recording sample.',
+      duration: 'Loading...',
+      type: 'Recording',
+      fileName: '23.mpeg',
+      filePath: 'assets/Doctor_patient_communication/23.mpeg',
     },
   ];
   selectedSample: number | null = null;
@@ -155,7 +342,6 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
       this.checkScreenSize();
     }
   }
-
   ngOnInit(): void {
     // Initialize application
     console.log('App initialized');
@@ -181,6 +367,9 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
     if (this.helpSteps.length > 0) {
       this.showTutorial();
     }
+
+    // Initialize audio sample durations
+    this.initializeAudioSamples();
 
     // Enable smooth transitions for UI changes
     document.body.classList.add('transitions-enabled');
@@ -373,17 +562,46 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
     // Scale the value to a percentage (0-100)
     return 10 + (value / 255) * 90; // 10% minimum height, max 100%
   }
-
   // Sample methods
   loadSample(index: number): void {
     this.selectedSample = index;
-    this.transcription = this.sampleTranscriptions[index].content;
+    const sample = this.sampleTranscriptions[index];
     this.showToast(
-      'success',
-      'Sample Loaded',
-      `Sample ${index + 1} has been loaded.`,
+      'info',
+      'Loading Sample',
+      `Loading ${sample.title}...`,
       3000
     );
+
+    fetch(sample.filePath)
+      .then((response) => response.blob())
+      .then((blob) => {
+        // Create a File object from the blob
+        const file = new File([blob], sample.fileName, { type: blob.type });
+        this.selectedFile = file;
+        this.selectedFileName = sample.fileName;
+
+        // Create URL for selected file so it can be played
+        if (this.uploadedFileUrl) {
+          URL.revokeObjectURL(this.uploadedFileUrl);
+        }
+        this.uploadedFileUrl = URL.createObjectURL(file);
+
+        // Process the file through the existing upload mechanism
+        this.uploadAudio();
+      })
+      .catch((error) => {
+        console.error('Error loading sample audio:', error);
+        this.showToast(
+          'error',
+          'Loading Error',
+          'Could not load sample audio.',
+          5000
+        );
+
+        // Fall back to just showing the transcription if audio loading fails
+        this.transcription = sample.content;
+      });
   }
 
   // Drag and drop file handling
@@ -1639,5 +1857,33 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
     };
 
     showNextStep();
+  }
+
+  // Get actual audio duration
+  getAudioDuration(url: string): Promise<string> {
+    return new Promise((resolve) => {
+      const audio = new Audio();
+      audio.addEventListener('loadedmetadata', () => {
+        const minutes = Math.floor(audio.duration / 60);
+        const seconds = Math.floor(audio.duration % 60);
+        resolve(`${minutes}:${seconds.toString().padStart(2, '0')}`);
+      });
+      audio.addEventListener('error', () => {
+        resolve('Unknown'); // Default duration if can't be determined
+      });
+      audio.src = url;
+    });
+  }
+
+  // Initialize sample audio durations
+  async initializeAudioSamples(): Promise<void> {
+    for (let i = 0; i < this.sampleTranscriptions.length; i++) {
+      const sample = this.sampleTranscriptions[i];
+      try {
+        sample.duration = await this.getAudioDuration(sample.filePath);
+      } catch (error) {
+        console.error(`Error getting duration for ${sample.fileName}:`, error);
+      }
+    }
   }
 }
