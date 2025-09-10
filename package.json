@@ -23,7 +23,7 @@
     "@angular/platform-browser-dynamic": "^19.2.3",
     "@angular/platform-server": "^19.2.3",
     "@angular/router": "^19.2.3",
-    "@angular/ssr": "^19.2.4",
+    "@angular/ssr": "^19.2.16",
     "express": "^4.21.2",
     "fs": "^0.0.1-security",
     "https": "^1.0.0",
